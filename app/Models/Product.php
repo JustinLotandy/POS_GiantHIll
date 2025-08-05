@@ -7,12 +7,24 @@ use Illuminate\Database\Eloquent\Model;
 
 class Product extends Model
 {
+    use HasFactory;
+
+    protected $primaryKey = 'id_Produk';
+    public $incrementing = false;
+    protected $keyType = 'string';
+
     protected $fillable = [
-        'name', 'category_id', 'price', 'stock', 'image'
+        'id_Produk',
+        'name',
+        'category_id',
+        'harga_sebelum',
+        'harga_sesudah',
+        'stock',
+        'image',
     ];
 
     public function category()
     {
-        return $this->belongsTo(Category::class);
+        return $this->belongsTo(Category::class, 'category_id', 'id_kategori');
     }
 }

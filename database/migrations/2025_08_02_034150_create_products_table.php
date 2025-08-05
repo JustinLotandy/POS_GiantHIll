@@ -17,7 +17,8 @@ return new class extends Migration
         $table->char('id_Produk', 36)->primary();
         $table->string('name');
         $table->char('category_id');
-        $table->decimal('price', 12, 2);
+        $table->decimal('harga_sebelum', 12, 2);
+        $table->decimal('harga_sesudah', 12, 2);
         $table->integer('stock');
         $table->string('image')->nullable();
         $table->timestamps();

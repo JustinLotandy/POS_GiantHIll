@@ -32,13 +32,15 @@ Route::middleware('auth')->group(function () {
     Route::resource('categories', CategoryController::class);
 
     // CRUD payment method
-    Route::resource('payment-methods', PaymentMethodController::class);
+    Route::resource('payment_methods', PaymentMethodController::class);
 
     // CRUD user
     Route::resource('users', UserController::class);
 
     // CRUD role
     Route::resource('roles', RoleController::class);
+
+    Route::resource('transactions', TransactionController::class);
 
     // POS (Transaksi)
     Route::get('/pos', [TransactionController::class, 'index'])->name('pos.index');
