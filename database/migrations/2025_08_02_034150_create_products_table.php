@@ -11,21 +11,21 @@ return new class extends Migration
     /**
      * Run the migrations.
      */
-    public function up(): void
-    {
-        Schema::create('products', function (Blueprint $table) {
-            $table->char('id_Produk')->primary();
-            $table->string('namaProduk');
-            $table->integer('stok');
-            $table->decimal('hargaBelil', 10, 2);
-            $table->decimal('hargaJual', 10, 2);
-            $table->char('id_kategori', 36);
-            $table->string('image')->nullable(); // untuk upload gambar
-            $table->timestamps();
+    public function up()
+{
+    Schema::create('products', function (Blueprint $table) {
+        $table->char('id_Produk', 36)->primary();
+        $table->string('name');
+        $table->char('category_id');
+        $table->decimal('price', 12, 2);
+        $table->integer('stock');
+        $table->string('image')->nullable();
+        $table->timestamps();
 
-            $table->foreign('id_kategori')->references('id_kategori')->on('categories')->onDelete('cascade');
-        });
-    }
+        $table->foreign('category_id')->references('id_Kategori')->on('categories');
+    });
+}
+
 
     /**
      * Reverse the migrations.
