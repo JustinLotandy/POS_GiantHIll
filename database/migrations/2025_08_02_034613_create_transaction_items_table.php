@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::create('transaction_items', function (Blueprint $table) {
             $table->char('id_TransactionItem', 36)->primary();
-            $table->char('id_Transaction', 36);
+            $table->unsignedBigInteger('id_Transaction');
             $table->char('id_Produk');
             $table->integer('quantity');
             $table->decimal('price', 10, 2);

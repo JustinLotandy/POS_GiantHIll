@@ -2,48 +2,213 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Transaction;
-use App\Models\PaymentMethod;
 use Illuminate\Http\Request;
+use App\Models\Product;
+use App\Models\Transaction;
+use App\Models\TransactionItem;
+use Illuminate\Support\Facades\DB;
+use App\Models\PaymentMethod;
 use Illuminate\Support\Str;
 
 class TransactionController extends Controller
 {
+    // Tampilkan halaman POS
+    public function pos()
+    {
+        $products = Product::all();
+        $cart = session('cart', []);
+        return view('pos.index', compact('products', 'cart'));
+    }
+
     public function index()
     {
-        $transactions = Transaction::with(['user', 'paymentMethod'])->get();
+        $transactions = Transaction::with(['paymentMethod', 'user'])->orderBy('created_at', 'desc')->paginate(10);
         return view('transactions.index', compact('transactions'));
     }
 
-    public function create()
-    {
-        $paymentMethods = PaymentMethod::all();
-        return view('transactions.create', compact('paymentMethods'));
+    // Tambah ke cart (pakai barcode atau id)
+    public function addToCart(Request $request)
+{
+    $id = $request->input('id'); // id_Produk dari form
+    $product = Product::where('id_Produk', $id)
+                ->orWhere('barcode', $id)
+                ->first();
+
+    if (!$product) {
+        return back()->with('error', 'Produk tidak ditemukan');
     }
 
-   public function edit($id)
+    $cart = session('cart', []);
+    $key = $product->id_Produk;
+
+    $cart[$key] = [
+        'id' => $product->id_Produk,
+        'name' => $product->name,
+        'harga_sesudah' => $product->harga_sesudah,
+        'qty' => isset($cart[$key]) ? $cart[$key]['qty'] + 1 : 1,
+    ];
+
+    session(['cart' => $cart]);
+    return redirect()->route('pos.index');
+}
+    // Update jumlah item
+    public function updateQty(Request $request)
+    {
+        $id = $request->input('id');
+        $action = $request->input('action');
+        $cart = session('cart', []);
+        if (isset($cart[$id])) {
+            if ($action === 'increase') {
+                $cart[$id]['qty']++;
+            } elseif ($action === 'decrease' && $cart[$id]['qty'] > 1) {
+                $cart[$id]['qty']--;
+            }
+        }
+        session(['cart' => $cart]);
+        return redirect()->route('pos.index');
+    }
+
+    // Hapus satu item dari cart
+    public function removeFromCart(Request $request)
 {
-    $transaction = \App\Models\Transaction::findOrFail($id);
-    $paymentMethods = \App\Models\PaymentMethod::all();
-    // Ambil user untuk select, atau cukup tampilkan user saat ini saja
-    return view('transactions.edit', compact('transaction', 'paymentMethods'));
+    $id = $request->input('id');
+    $cart = session('cart', []);
+    if (isset($cart[$id])) {
+        unset($cart[$id]);
+    }
+    session(['cart' => $cart]);
+    return redirect()->route('pos.index');
 }
 
-public function update(Request $request, $id)
-{
-    $transaction = \App\Models\Transaction::findOrFail($id);
+    // Checkout (dummy saja, untuk testing)
+   
 
-    $request->validate([
-        'id_PaymentMethod' => 'required|exists:payment_methods,id_PaymentMethod',
-        'total'   => 'required|numeric',
-        'paid'    => 'required|numeric',
-        'change'  => 'required|numeric',
-        // user_id biasanya tidak diubah (tapi bisa ditambahkan jika perlu)
+    public function cariBarcode(Request $request)
+    {
+        $barcode = $request->input('barcode');
+        $product = \App\Models\Product::where('barcode', $barcode)->first();
+
+        if ($product) {
+            // Langsung add ke cart (logika sama dengan addToCart)
+            $cart = session('cart', []);
+
+            // Konsisten key (pakai id_Produk atau id, sesuaikan di semua tempat)
+            $key = $product->id_Produk;
+            $cart = session('cart', []);
+
+            if (isset($cart[$key])) {
+            $cart[$key]['qty']++;
+        } else {
+            $cart[$key] = [
+                'id' => $product->id_Produk, // <-- pakai id_Produk
+                'name' => $product->name,
+                'harga_sesudah' => $product->harga_sesudah,
+                'qty' => 1,
+            ];
+        }
+        session(['cart' => $cart]);
+        return redirect()->route('pos.index')->with('success', 'Produk masuk keranjang: ' . $product->name);
+    } else {
+        return redirect()->route('pos.index')->with('error', 'Produk tidak ditemukan!');
+    }
+    
+    }
+    public function showCheckout()
+    {
+        $cart = session('cart', []);
+        $paymentMethods = PaymentMethod::all();
+        return view('pos.checkout', compact('cart', 'paymentMethods'));
+    }
+    public function checkout(Request $request)
+{
+    $cart = session('cart', []);
+    $bayar = $request->input('bayar');
+    $idPaymentMethod = $request->input('id_PaymentMethod');
+    $total = collect($cart)->sum(fn($item) => $item['qty'] * $item['harga_sesudah']);
+
+    if ($bayar < $total) {
+        return back()->with('error', 'Jumlah bayar kurang dari total.');
+    }
+
+    // Simpan transaksi (contoh)
+    $trx = \App\Models\Transaction::create([
+        // 'id_Transaction'    => (string) Str::uuid(),
+        'id_PaymentMethod'  => $idPaymentMethod,
+        'total' => $total,
+        'paid' => $bayar,
+        'change' => $bayar - $total,
+        'user_id' => auth()->id(),
+    ]);
+   foreach ($cart as $item) {
+    \App\Models\TransactionItem::create([
+        'id_TransactionItem' => (string) Str::uuid(),
+        'id_Transaction'    => $trx->id_Transaction,
+        'id_Produk' => $item['id'],
+        'nama_produk' => $item['name'],
+        'quantity' => $item['qty'],
+        'price' => $item['harga_sesudah'],
+        'subtotal' => $item['qty'] * $item['harga_sesudah'],
     ]);
 
-    $data = $request->only(['id_PaymentMethod', 'total', 'paid', 'change']);
-    $transaction->update($data);
-
-    return redirect()->route('transactions.index')->with('success', 'Transaksi berhasil diupdate!');
+    // -- Tambahkan ini --
+    $product = \App\Models\Product::find($item['id']);
+    if ($product) {
+        $product->stock = max(0, $product->stock - $item['qty']);
+        $product->save();
+    }
 }
+
+
+    session()->forget('cart');
+    // **REDIRECT KE STRUK!**
+    return redirect()->route('pos.struk', $trx->id_Transaction);
+}
+
+public function struk($id)
+{
+    $trx = Transaction::with('items.product', 'user')->findOrFail($id);
+    return view('pos.struk', compact('trx'));
+}
+
+public function processPayment(Request $request)
+{
+    $cart = session('cart', []);
+    $total = array_sum(array_map(fn($i) => $i['qty'] * $i['harga_sesudah'], $cart));
+
+    $request->validate([
+        'amount_paid' => 'required|numeric|min:' . $total,
+    ]);
+
+    $change = $request->amount_paid - $total;
+
+    // Di sini simpan transaksi ke database jika mau
+    // Transaction::create(...);
+
+    session()->forget('cart');
+    return redirect()->route('pos.index')->with('success', 'Pembayaran berhasil! Kembalian: Rp ' . number_format($change, 0, ',', '.'));
+}
+public function simpanTransaksi(Request $request)
+{
+    $cart = session('cart', []);
+    if (empty($cart)) {
+        return redirect()->route('pos.index')->with('error', 'Keranjang kosong!');
+    }
+
+    $total = collect($cart)->sum(function($i) {
+        return $i['qty'] * $i['harga_sesudah'];
+    });
+    $bayar = $request->input('bayar');
+    if ($bayar < $total) {
+        return back()->with('error', 'Uang pembayaran kurang!');
+    }
+
+    // Di sini simpan transaksi ke database (tambahkan sesuai strukturmu)
+    // ... Transaction::create([...])
+    // ... TransactionItem::create([...])
+
+    // Setelah simpan, clear cart
+    session()->forget('cart');
+    return redirect()->route('pos.index')->with('success', 'Transaksi berhasil disimpan!');
+}
+
 }

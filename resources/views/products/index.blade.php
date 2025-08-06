@@ -21,6 +21,7 @@
                         <th class="px-4 py-3 font-bold text-gray-700 text-left">Harga Sesudah</th>
                         <th class="px-4 py-3 font-bold text-gray-700 text-left">Stok</th>
                         <th class="px-4 py-3 font-bold text-gray-700 text-left">Gambar</th>
+                        <th class="px-4 py-3 font-bold text-gray-700 text-left">Barcode</th>
                         <th class="px-4 py-3 font-bold text-gray-700 text-left">Aksi</th>
                     </tr>
                 </thead>
@@ -40,6 +41,7 @@
                                     <span class="text-gray-400 italic">-</span>
                                 @endif
                             </td>
+                            <td class="px-4 py-2 font-mono">{{ $p->barcode }}</td>
                             <td class="px-4 py-2 flex gap-1">
                                 <a href="{{ route('products.edit', $p->id_Produk) }}"
                                    class="inline-block px-3 py-1 bg-yellow-400 hover:bg-yellow-500 text-xs rounded font-semibold text-white shadow">

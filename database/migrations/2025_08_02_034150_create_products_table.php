@@ -21,6 +21,7 @@ return new class extends Migration
         $table->decimal('harga_sesudah', 12, 2);
         $table->integer('stock');
         $table->string('image')->nullable();
+        $table->string('barcode')->nullable();
         $table->timestamps();
 
         $table->foreign('category_id')->references('id_Kategori')->on('categories');

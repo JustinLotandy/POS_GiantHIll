@@ -46,6 +46,10 @@
                 <label class="block mb-1 font-semibold">Gambar (optional)</label>
                 <input type="file" name="image" class="w-full border border-gray-300 rounded px-3 py-2">
             </div>
+            <div>
+                <label class="block mb-1 font-semibold">Barcode (optional)</label>
+                <input type="text" name="barcode" class="w-full border border-gray-300 rounded px-3 py-2">
+            </div>
             <div class="flex justify-between items-center mt-4">
         <a href="{{ route('products.index') }}" class="text-gray-600 hover:underline">Kembali</a>
         <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded shadow">

@@ -27,11 +27,12 @@ class ProductController extends Controller
     $categories = \App\Models\Category::all();
     return view('products.edit', compact('product', 'categories'));
 }
-    public function store(Request $request)
+   public function store(Request $request)
 {
     $request->validate([
         'id_Produk' => 'nullable|string|max:36|unique:products,id_Produk',
         'name' => 'required',
+        'barcode' => 'nullable|string|max:64|unique:products,barcode',
         'category_id' => 'required|exists:categories,id_kategori',
         'harga_sebelum' => 'required|numeric',
         'harga_sesudah' => 'required|numeric',
@@ -40,8 +41,6 @@ class ProductController extends Controller
     ]);
 
     $data = $request->except(['image']);
-    $data['id_Produk'] = $request->id_Produk ;
-
     if ($request->hasFile('image')) {
         $data['image'] = $request->file('image')->store('products', 'public');
     }
@@ -53,8 +52,8 @@ class ProductController extends Controller
 public function update(Request $request, $id)
 {
     $request->validate([
-        // id_Produk tidak diubah saat edit, jadi tidak perlu validasi unique
         'name' => 'required',
+        'barcode' => 'nullable|string|max:64|unique:products,barcode,' . $id . ',id_Produk',
         'category_id' => 'required|exists:categories,id_kategori',
         'harga_sebelum' => 'required|numeric',
         'harga_sesudah' => 'required|numeric',

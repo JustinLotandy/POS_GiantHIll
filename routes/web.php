@@ -10,6 +10,7 @@ use App\Http\Controllers\TransactionController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\ReportController;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\strukController;
 
 Route::get('/', function () {
     return view('welcome');
@@ -38,17 +39,47 @@ Route::middleware('auth')->group(function () {
     Route::resource('users', UserController::class);
 
     // CRUD role
-    Route::resource('roles', RoleController::class);
+    // Route::resource('roles', RoleController::class);
 
     Route::resource('transactions', TransactionController::class);
 
-    // POS (Transaksi)
-    Route::get('/pos', [TransactionController::class, 'index'])->name('pos.index');
+    // POS (Point of Sale)
+    Route::get('/pos', [TransactionController::class, 'pos'])->name('pos.index');
+    Route::post('/pos/add', [TransactionController::class, 'addToCart'])->name('pos.add');
+    Route::post('/pos/update-qty', [TransactionController::class, 'updateQty'])->name('pos.updateQty');
+    Route::post('/pos/remove', [TransactionController::class, 'removeFromCart'])->name('pos.remove');
+
+    Route::get('/pos/checkout', [TransactionController::class, 'showcheckout'])->name('pos.checkout');
+   
     Route::post('/pos/checkout', [TransactionController::class, 'checkout'])->name('pos.checkout');
 
-    // Laporan
-    Route::get('/reports', [ReportController::class, 'index'])->name('reports.index');
+    Route::get('/pos/cari-barcode', [TransactionController::class, 'cariBarcode'])->name('pos.cariBarcode');
+    
+    Route::get('/pos/struk/{id}', [TransactionController::class, 'struk'])->name('pos.struk');
+
+
+    Route::get('/pos/struk/{id}', [strukController::class, 'struk'])->name('pos.struk');
+
+    Route::get('/laporan', [ReportController::class, 'index'])->name('laporan.index');
+    Route::get('/laporan/harian', [ReportController::class, 'harian'])->name('laporan.harian');
+    Route::get('/laporan/mingguan', [ReportController::class, 'mingguan'])->name('laporan.mingguan');
+    Route::get('/laporan/bulanan', [ReportController::class, 'bulanan'])->name('laporan.bulanan');
+
+
+
 });
+
+
+    // Laporan
+    // Route::get('/reports', [ReportController::class, 'index'])->name('reports.index');
+
+//     Route::get('/clear-cart', function () {
+//     session()->forget('cart');
+//     return back();
+    
+// });
+
+
 
 require __DIR__.'/auth.php';
 
