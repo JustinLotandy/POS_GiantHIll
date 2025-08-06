@@ -1,31 +1,25 @@
 <x-app-layout>
-    <x-slot name="header">
-        <h2 class="font-semibold text-xl text-gray-800 leading-tight">Edit User</h2>
-    </x-slot>
-    <div class="max-w-md mx-auto py-8">
-        <form action="{{ route('users.update', $user->id) }}" method="POST" class="bg-white rounded shadow p-6 space-y-4">
+    <div class="max-w-xl mx-auto mt-10 bg-white rounded shadow p-6">
+        <h2 class="font-bold mb-4 text-gray-700">Atur Role untuk User: {{ $user->name }}</h2>
+        <form method="POST" action="{{ route('users.updateRole', $user->id) }}">
             @csrf
-            @method('PUT')
-            <div>
-                <label class="block mb-1 font-semibold">Nama</label>
-                <input type="text" name="name" class="w-full border border-gray-300 rounded px-3 py-2"
-                    value="{{ old('name', $user->name) }}" required>
+            <div class="mb-4">
+                <label class="block font-semibold mb-2">Role:</label>
+                <div class="flex flex-wrap gap-3">
+                    @foreach($roles as $role)
+                    <label class="inline-flex items-center">
+                        <input type="checkbox" name="roles[]" value="{{ $role->name }}"
+                            class="rounded border-gray-300"
+                            {{ in_array($role->name, $userRoles) ? 'checked' : '' }}>
+                        <span class="ml-2">{{ ucfirst($role->name) }}</span>
+                    </label>
+                    @endforeach
+                </div>
             </div>
-            <div>
-                <label class="block mb-1 font-semibold">Email</label>
-                <input type="email" name="email" class="w-full border border-gray-300 rounded px-3 py-2"
-                    value="{{ old('email', $user->email) }}" required>
+            <div class="flex gap-2">
+                <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded shadow hover:bg-blue-700">Simpan</button>
+                <a href="{{ route('users.index') }}" class="bg-gray-400 text-white px-4 py-2 rounded hover:bg-gray-500 shadow">Batal</a>
             </div>
-            <div>
-                <label class="block mb-1 font-semibold">Password (biarkan kosong jika tidak ingin diubah)</label>
-                <input type="password" name="password" class="w-full border border-gray-300 rounded px-3 py-2">
-            </div>
-            <div>
-                <label class="block mb-1 font-semibold">Konfirmasi Password</label>
-                <input type="password" name="password_confirmation" class="w-full border border-gray-300 rounded px-3 py-2">
-            </div>
-            <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition">Update</button>
-            <a href="{{ route('users.index') }}" class="ml-2 text-gray-700">Batal</a>
         </form>
     </div>
 </x-app-layout>

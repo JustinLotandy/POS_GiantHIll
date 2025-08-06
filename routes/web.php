@@ -12,6 +12,7 @@ use App\Http\Controllers\ReportController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\strukController;
 
+
 Route::get('/', function () {
     return view('welcome');
 });
@@ -65,7 +66,20 @@ Route::middleware('auth')->group(function () {
     Route::get('/laporan/mingguan', [ReportController::class, 'mingguan'])->name('laporan.mingguan');
     Route::get('/laporan/bulanan', [ReportController::class, 'bulanan'])->name('laporan.bulanan');
 
+    Route::middleware(['auth', 'role:admin'])->group(function () {
+    Route::get('/roles', [RoleController::class, 'index'])->name('roles.index');
+    Route::get('/roles/create', [RoleController::class, 'create'])->name('roles.create');
+    Route::post('/roles', [RoleController::class, 'store'])->name('roles.store');
+    Route::get('/roles/{role}/edit', [RoleController::class, 'edit'])->name('roles.edit');
+    Route::put('/roles/{role}', [RoleController::class, 'update'])->name('roles.update');
+    Route::delete('/roles/{role}', [RoleController::class, 'destroy'])->name('roles.destroy');
+    
+    // Assign role ke user
+    Route::get('/users/{user}/roles', [UserController::class, 'editRole'])->name('users.editRole');
+    Route::post('/users/{user}/roles', [UserController::class, 'updateRole'])->name('users.updateRole');
 
+
+});
 
 });
 

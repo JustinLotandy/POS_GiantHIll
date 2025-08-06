@@ -43,6 +43,10 @@
                     <x-nav-link :href="route('laporan.index')" :active="request()->routeIs('laporan.*')">
                         {{ __('laporan') }}
                     </x-nav-link>
+
+                    <x-nav-link :href="route('roles.index')" :active="request()->routeIs('roles.*')">
+                        {{ __('roles') }}
+                    </x-nav-link>
                 </div>
             </div>
 
