@@ -20,49 +20,49 @@
 
                     @can('pos.transaksi')
                         <x-nav-link :href="route('pos.index')" :active="request()->routeIs('pos.*')">
-                            {{ __('pos') }}
+                            {{ __('POS') }}
                         </x-nav-link>
                     @endcan
 
                     @can('products.lihat')
                         <x-nav-link :href="route('products.index')" :active="request()->routeIs('products.*')">
-                            {{ __('products') }}
+                            {{ __('Produk') }}
                         </x-nav-link>
                     @endcan
 
                     @can('categories.lihat')
                         <x-nav-link :href="route('categories.index')" :active="request()->routeIs('categories.*')">
-                            {{ __('categories') }}
+                            {{ __('Kategori') }}
                         </x-nav-link>
                     @endcan
 
                     @can('payment_methods.lihat')
                         <x-nav-link :href="route('payment_methods.index')" :active="request()->routeIs('payment_methods.*')">
-                            {{ __('payment_methods') }}
+                            {{ __('Payment Method') }}
                         </x-nav-link>
                     @endcan
 
                     @can('transactions.lihat')
                         <x-nav-link :href="route('transactions.index')" :active="request()->routeIs('transactions.*')">
-                            {{ __('transactions') }}
+                            {{ __('Daftar Transaksi') }}
                         </x-nav-link>
                     @endcan
 
                     @can('users.lihat')
                         <x-nav-link :href="route('users.index')" :active="request()->routeIs('users.*')">
-                            {{ __('users') }}
+                            {{ __('Pengguna') }}
                         </x-nav-link>
                     @endcan
 
                     @canany(['laporan.harian', 'laporan.mingguan', 'laporan.bulanan'])
                         <x-nav-link :href="route('laporan.index')" :active="request()->routeIs('laporan.*')">
-                            {{ __('laporan') }}
+                            {{ __('Laporan') }}
                         </x-nav-link>
                     @endcanany
 
                     @can('roles.lihat')
                         <x-nav-link :href="route('roles.index')" :active="request()->routeIs('roles.*')">
-                            {{ __('roles') }}
+                            {{ __('Roles') }}
                         </x-nav-link>
                     @endcan
                 </div>
