@@ -23,10 +23,23 @@ class ProductController extends Controller
     }
 
     public function create()
-    {
-        $categories = Category::all();
-        return view('products.create', compact('categories'));
-    }
+        {
+            $categories = Category::all();
+
+            // Ambil produk terakhir
+            $lastProduct = \App\Models\Product::orderBy('id_Produk', 'desc')->first();
+            $lastId = $lastProduct?->id_Produk ?? null;
+
+            // Generate ID berikutnya
+            if ($lastId && preg_match('/P-(\d+)/', $lastId, $matches)) {
+                $nextNumber = (int)$matches[1] + 1;
+                $suggestedId = 'P-' . str_pad($nextNumber, 3, '0', STR_PAD_LEFT);
+            } else {
+                $suggestedId = 'P-001';
+            }
+
+            return view('products.create', compact('categories', 'lastId', 'suggestedId'));
+        }
 
     public function edit($id)
 {

@@ -9,8 +9,16 @@
         <form action="{{ route('categories.store') }}" method="POST" class="space-y-4">
             @csrf
             <div>
-                <label class="block mb-1 font-semibold">ID Kategori <span class="text-xs text-gray-400">(optional/manual)</span></label>
-                <input type="text" name="id_kategori" maxlength="36" class="w-full border border-gray-300 rounded px-3 py-2" placeholder="Biarkan kosong untuk UUID otomatis">
+                <label class="block mb-1 font-semibold">ID Kategori <span class="text-xs text-gray-400">(opsional/manual)</span></label>
+                
+                @if($lastId)
+                    <p class="text-sm text-gray-500 mb-1">ID Sebelumnya: <span class="font-semibold">{{ $lastId }}</span></p>
+                @endif
+
+                <input type="text" name="id_kategori" maxlength="36"
+                    class="w-full border border-gray-300 rounded px-3 py-2"
+                    value="{{ old('id_kategori', $suggestedId ?? '') }}"
+                    required>
             </div>
             <div>
                 <label class="block mb-1 font-semibold">Nama Kategori</label>

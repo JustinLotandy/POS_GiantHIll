@@ -22,7 +22,20 @@ class PaymentMethodController extends Controller
 
     public function create()
     {
-        return view('payment_methods.create');
+        // Ambil metode terakhir
+        $last = \App\Models\PaymentMethod::orderBy('id_PaymentMethod', 'desc')->first();
+
+        $lastId = $last?->id_PaymentMethod ?? null;
+
+        // Generate ID berikutnya otomatis
+        if ($lastId && preg_match('/MP-(\d+)/', $lastId, $matches)) {
+            $nextNumber = (int)$matches[1] + 1;
+            $suggestedId = 'MP-' . str_pad($nextNumber, 3, '0', STR_PAD_LEFT);
+        } else {
+            $suggestedId = 'MP-001';
+        }
+
+        return view('payment_methods.create', compact('suggestedId'));
     }
 
     public function store(Request $request)

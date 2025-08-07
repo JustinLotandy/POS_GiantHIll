@@ -9,7 +9,9 @@
             @csrf
             <div>
                 <label class="block mb-1 font-semibold">ID Metode (boleh manual/UUID)</label>
-                <input type="text" name="id_PaymentMethod" class="w-full border border-gray-300 rounded px-3 py-2" value="{{ old('id_PaymentMethod') }}" required>
+                <input type="text" name="id_PaymentMethod"
+                    class="w-full border border-gray-300 rounded px-3 py-2"
+                    value="{{ old('id_PaymentMethod', $suggestedId ?? '') }}" required>
             </div>
             <div>
                 <label class="block mb-1 font-semibold">Nama Metode</label>

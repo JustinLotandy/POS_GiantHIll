@@ -23,46 +23,65 @@ class CategoryController extends Controller
     }
 
     public function create()
-{
-    return view('categories.create');
-}
+    {
+        $categories = \App\Models\Category::all();
 
-public function store(Request $request)
-{
-    $request->validate([
-        'id_kategori' => 'nullable|string|max:36|unique:categories,id_kategori',
-        'nama_kategori' => 'required|string|max:255',
-    ]);
+        $maxNumber = 0;
 
-    Category::create([
-        'id_kategori' => $request->id_kategori ,
-        'nama_kategori' => $request->nama_kategori,
-    ]);
+        foreach ($categories as $cat) {
+            if (preg_match('/KAT-(\d+)/', $cat->id_kategori, $matches)) {
+                $number = (int) $matches[1];
+                if ($number > $maxNumber) {
+                    $maxNumber = $number;
+                }
+            }
+        }
 
-    return redirect()->route('categories.index')->with('success', 'Kategori berhasil ditambah!');
-}
+        $nextNumber = $maxNumber + 1;
+        $suggestedId = 'KAT-' . str_pad($nextNumber, 3, '0', STR_PAD_LEFT);
 
-public function edit($id)
-{
-    $category = Category::findOrFail($id);
-    return view('categories.edit', compact('category'));
-}
+        return view('categories.create', [
+            'suggestedId' => $suggestedId,
+            'lastId' => 'KAT-' . str_pad($maxNumber, 3, '0', STR_PAD_LEFT),
+        ]);
+    }
 
-public function update(Request $request, $id)
-{
-    $request->validate([
-        'id_kategori' => 'nullable|string|max:36|unique:categories,id_kategori,' . $id . ',id_kategori',
-        'nama_kategori' => 'required|string|max:255',
-    ]);
+    public function store(Request $request)
+    {
+        $request->validate([
+            'id_kategori' => 'nullable|string|max:36|unique:categories,id_kategori',
+            'nama_kategori' => 'required|string|max:255',
+        ]);
 
-    $category = Category::findOrFail($id);
-    $category->update([
-        'id_kategori' => $request->id_kategori ?? $category->id_kategori,
-        'nama_kategori' => $request->nama_kategori,
-    ]);
+        Category::create([
+            'id_kategori' => $request->id_kategori ,
+            'nama_kategori' => $request->nama_kategori,
+        ]);
 
-    return redirect()->route('categories.index')->with('success', 'Kategori berhasil diupdate!');
-}
+        return redirect()->route('categories.index')->with('success', 'Kategori berhasil ditambah!');
+    }
+
+    public function edit($id)
+    {
+        $category = Category::findOrFail($id);
+        return view('categories.edit', compact('category'));
+    }
+
+    public function update(Request $request, $id)
+    {
+        $request->validate([
+            'id_kategori' => 'nullable|string|max:36|unique:categories,id_kategori,' . $id . ',id_kategori',
+            'nama_kategori' => 'required|string|max:255',
+        ]);
+
+        $category = Category::findOrFail($id);
+        $category->update([
+            'id_kategori' => $request->id_kategori ?? $category->id_kategori,
+            'nama_kategori' => $request->nama_kategori,
+        ]);
+
+        return redirect()->route('categories.index')->with('success', 'Kategori berhasil diupdate!');
+    }
 
     public function destroy($id)
     {
