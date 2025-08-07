@@ -12,43 +12,60 @@
 
                 <!-- Navigation Links -->
                 <div class="hidden space-x-8 sm:-my-px sm:ms-10 sm:flex">
-                    <x-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')">
-                        {{ __('Dashboard') }}
-                    </x-nav-link>
-                     <x-nav-link :href="route('pos.index')" :active="request()->routeIs('pos.*')">
-                        {{ __('pos') }}
-                    </x-nav-link>
+                    @can('dashboard.lihat')
+                        <x-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')">
+                            {{ __('Dashboard') }}
+                        </x-nav-link>
+                    @endcan
 
-                    <x-nav-link :href="route('products.index')" :active="request()->routeIs('products.*')">
-                        {{ __('products') }}
-                    </x-nav-link>
+                    @can('pos.transaksi')
+                        <x-nav-link :href="route('pos.index')" :active="request()->routeIs('pos.*')">
+                            {{ __('pos') }}
+                        </x-nav-link>
+                    @endcan
 
-                    <x-nav-link :href="route('categories.index')" :active="request()->routeIs('categories.*')">
-                        {{ __('categories') }}
-                    </x-nav-link>
+                    @can('products.lihat')
+                        <x-nav-link :href="route('products.index')" :active="request()->routeIs('products.*')">
+                            {{ __('products') }}
+                        </x-nav-link>
+                    @endcan
 
-                    <x-nav-link :href="route('payment_methods.index')" :active="request()->routeIs('payment_methods.*')">
-                        {{ __('payment_methods') }}
-                    </x-nav-link>
+                    @can('categories.lihat')
+                        <x-nav-link :href="route('categories.index')" :active="request()->routeIs('categories.*')">
+                            {{ __('categories') }}
+                        </x-nav-link>
+                    @endcan
 
-                    
-                    <x-nav-link :href="route('transactions.index')" :active="request()->routeIs('transactions.*')">
-                        {{ __('transactions') }}
-                    </x-nav-link>
+                    @can('payment_methods.lihat')
+                        <x-nav-link :href="route('payment_methods.index')" :active="request()->routeIs('payment_methods.*')">
+                            {{ __('payment_methods') }}
+                        </x-nav-link>
+                    @endcan
 
-                    <x-nav-link :href="route('users.index')" :active="request()->routeIs('users.*')">
-                        {{ __('users') }}
-                    </x-nav-link>
+                    @can('transactions.lihat')
+                        <x-nav-link :href="route('transactions.index')" :active="request()->routeIs('transactions.*')">
+                            {{ __('transactions') }}
+                        </x-nav-link>
+                    @endcan
 
-                    <x-nav-link :href="route('laporan.index')" :active="request()->routeIs('laporan.*')">
-                        {{ __('laporan') }}
-                    </x-nav-link>
+                    @can('users.lihat')
+                        <x-nav-link :href="route('users.index')" :active="request()->routeIs('users.*')">
+                            {{ __('users') }}
+                        </x-nav-link>
+                    @endcan
 
-                    <x-nav-link :href="route('roles.index')" :active="request()->routeIs('roles.*')">
-                        {{ __('roles') }}
-                    </x-nav-link>
+                    @canany(['laporan.harian', 'laporan.mingguan', 'laporan.bulanan'])
+                        <x-nav-link :href="route('laporan.index')" :active="request()->routeIs('laporan.*')">
+                            {{ __('laporan') }}
+                        </x-nav-link>
+                    @endcanany
+
+                    @can('roles.lihat')
+                        <x-nav-link :href="route('roles.index')" :active="request()->routeIs('roles.*')">
+                            {{ __('roles') }}
+                        </x-nav-link>
+                    @endcan
                 </div>
-            </div>
 
             <!-- Settings Dropdown -->
             <div class="hidden sm:flex sm:items-center sm:ms-6">

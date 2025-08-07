@@ -9,6 +9,13 @@ use Spatie\Permission\Models\Permission;
 
 class RoleController extends Controller
 {
+    // public function __construct()
+    // {
+    //     $this->middleware('permission:role.lihat')->only('index');
+    //     $this->middleware('permission:role.tambah')->only(['create', 'store']);
+    //     $this->middleware('permission:role.edit')->only(['edit', 'update']);
+    //     $this->middleware('permission:role.hapus')->only('destroy');
+    // }
     public function index()
     {
         $roles = Role::with('permissions')->get();
@@ -17,10 +24,10 @@ class RoleController extends Controller
 
     public function create()
     {
-        // Group permission by fitur (prefix: products., categories., dll)
         $permissions = Permission::all()->groupBy(function ($item) {
-            return explode('.', $item->name)[0]; // 'products', 'categories'
+            return explode('.', $item->name)[0]; // Kelompokkan berdasarkan prefix seperti 'product.create'
         });
+
         return view('roles.create', compact('permissions'));
     }
 
@@ -37,32 +44,33 @@ class RoleController extends Controller
         return redirect()->route('roles.index')->with('success', 'Role berhasil dibuat!');
     }
 
-    public function edit($id)
-    {
-        $role = Role::findOrFail($id);
-        $rolePermissions = $role->permissions->pluck('name')->toArray();
-        $permissions = Permission::all()->groupBy(function ($item) {
-            return explode('.', $item->name)[0];
-        });
+    public function edit(Role $role)
+{
+    $permissions = Permission::all()->groupBy(function ($perm) {
+        return explode('.', $perm->name)[0]; // Kelompokkan berdasarkan prefix fitur
+    });
 
-        return view('roles.edit', compact('role', 'permissions', 'rolePermissions'));
-    }
+    $rolePermissions = $role->permissions->pluck('name')->toArray();
 
-    public function update(Request $request, $id)
-    {
-        $role = Role::findOrFail($id);
+    return view('roles.edit', compact('role', 'permissions', 'rolePermissions'));
+}
 
-        $request->validate([
-            'name' => 'required|unique:roles,name,'.$role->id,
-            'permissions' => 'array'
-        ]);
 
-        $role->update(['name' => $request->name]);
-        $role->syncPermissions($request->permissions ?? []);
+    public function update(Request $request, Role $role)
+{
+    $request->validate([
+        'name' => 'required|string|max:255',
+        'permissions' => 'array',
+    ]);
 
-        return redirect()->route('roles.index')->with('success', 'Role berhasil diupdate!');
-    }
+    $role->update([
+        'name' => $request->name,
+    ]);
 
+    $role->syncPermissions($request->permissions ?? []);
+
+    return redirect()->route('roles.index')->with('success', 'Role berhasil diperbarui');
+}
     public function destroy($id)
     {
         $role = Role::findOrFail($id);

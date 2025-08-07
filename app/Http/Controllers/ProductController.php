@@ -9,6 +9,13 @@ use Illuminate\Support\Str;
 
 class ProductController extends Controller
 {
+     public function __construct()
+    {
+        $this->middleware('permission:products.lihat')->only('index');
+        $this->middleware('permission:products.tambah')->only(['create', 'store']);
+        $this->middleware('permission:products.edit')->only(['edit', 'update']);
+        $this->middleware('permission:products.hapus')->only('destroy');
+    }
     public function index()
     {
         $products = Product::with('category')->get();

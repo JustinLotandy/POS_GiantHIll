@@ -8,6 +8,14 @@ use PDF; // pastikan sudah install barryvdh/laravel-dompdf
 
 class ReportController extends Controller
 {
+    public function __construct()
+    {
+        $this->middleware('permission:laporan.harian')->only('index');
+        $this->middleware('permission:laporan.harian')->only('harian');
+        $this->middleware('permission:laporan.mingguan')->only('mingguan');
+        $this->middleware('permission:laporan.bulanan')->only('bulanan');
+    }
+
     // Tampil halaman tombol laporan
     public function index()
     {

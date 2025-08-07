@@ -7,6 +7,13 @@ use Illuminate\Http\Request;
 
 class PaymentMethodController extends Controller
 {
+   public function __construct()
+    {
+        $this->middleware('permission:payment_methods.lihat')->only('index');
+        $this->middleware('permission:payment_methods.tambah')->only(['create', 'store']);
+        $this->middleware('permission:payment_methods.edit')->only(['edit', 'update']);
+        $this->middleware('permission:payment_methods.hapus')->only('destroy');
+    }
     public function index()
     {
         $payments = PaymentMethod::all();

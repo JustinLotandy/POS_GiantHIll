@@ -13,6 +13,7 @@
                         <th class="px-4 py-3 font-bold text-gray-700">ID</th>
                         <th class="px-4 py-3 font-bold text-gray-700">Nama</th>
                         <th class="px-4 py-3 font-bold text-gray-700">Email</th>
+                        <th class="px-4 py-3 font-bold text-gray-700">Role</th>
                         <th class="px-4 py-3 font-bold text-gray-700">Aksi</th>
                     </tr>
                 </thead>
@@ -22,10 +23,16 @@
                             <td class="px-4 py-2 font-mono">{{ $user->id }}</td>
                             <td class="px-4 py-2">{{ $user->name }}</td>
                             <td class="px-4 py-2">{{ $user->email }}</td>
+                             <td class="px-4 py-2">
+                                {{-- Ambil dan tampilkan semua role --}}
+                                @foreach($user->getRoleNames() as $role)
+                                    <span class="inline-block bg-gray-200 text-gray-700 px-2 py-1 rounded text-xs">{{ ucfirst($role) }}</span>
+                                @endforeach
+                            </td>
                             <td class="px-4 py-2 flex gap-1">
                                 <a href="{{ route('users.edit', $user->id) }}" class="bg-yellow-400 hover:bg-yellow-500 text-xs rounded px-3 py-1 text-white">Edit</a>
                                 
-                                <a href="{{ route('users.editRole', $user->id) }}" class="bg-indigo-600 text-white px-3 py-1 rounded text-xs hover:bg-indigo-700">Atur Role</a>
+                                <!-- <a href="{{ route('users.editRole', $user->id) }}" class="bg-indigo-600 text-white px-3 py-1 rounded text-xs hover:bg-indigo-700">Atur Role</a> -->
 
                                 <form action="{{ route('users.destroy', $user->id) }}" method="POST" onsubmit="return confirm('Hapus user ini?')" class="inline">
                                     @csrf @method('DELETE')

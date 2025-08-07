@@ -9,9 +9,27 @@ use App\Models\TransactionItem;
 use Illuminate\Support\Facades\DB;
 use App\Models\PaymentMethod;
 use Illuminate\Support\Str;
+use App\Models\User;
 
 class TransactionController extends Controller
 {
+   public function __construct()
+    {
+        // Lihat POS dan checkout
+        $this->middleware('permission:transactions.lihat')->only([
+            'pos', 'addToCart', 'updateQty', 'removeFromCart',
+            'cariBarcode', 'showCheckout', 'checkout', 'struk', 'index'
+        ]);
+
+        // Tambah transaksi (jika ada metode store manual)
+        $this->middleware('permission:transactions.tambah')->only(['store']);
+
+        // Edit transaksi
+        $this->middleware('permission:transactions.edit')->only(['edit', 'update']);
+
+        // Hapus transaksi
+        $this->middleware('permission:transactions.hapus')->only(['destroy']);
+    }
     // Tampilkan halaman POS
     public function pos()
     {
@@ -70,17 +88,17 @@ class TransactionController extends Controller
 
     // Hapus satu item dari cart
     public function removeFromCart(Request $request)
-{
-    $id = $request->input('id');
-    $cart = session('cart', []);
-    if (isset($cart[$id])) {
-        unset($cart[$id]);
+    {
+        $id = $request->input('id');
+        $cart = session('cart', []);
+        if (isset($cart[$id])) {
+            unset($cart[$id]);
+        }
+        session(['cart' => $cart]);
+        return redirect()->route('pos.index');
     }
-    session(['cart' => $cart]);
-    return redirect()->route('pos.index');
-}
 
-    // Checkout (dummy saja, untuk testing)
+        // Checkout (dummy saja, untuk testing)
    
 
     public function cariBarcode(Request $request)
@@ -211,4 +229,45 @@ public function simpanTransaksi(Request $request)
     return redirect()->route('pos.index')->with('success', 'Transaksi berhasil disimpan!');
 }
 
+public function destroy($id)
+{
+    $transaction = Transaction::findOrFail($id);
+
+    // Jika ingin juga hapus detail transaksi (opsional, jika ada relasi)
+    // $transaction->items()->delete(); 
+
+    $transaction->delete();
+
+    return redirect()->route('transactions.index')->with('success', 'Transaksi berhasil dihapus!');
+}
+public function edit($id)
+{
+    $transaction = Transaction::findOrFail($id);
+    $users = User::all();
+    $paymentMethods = PaymentMethod::all();
+
+    return view('transactions.edit', compact('transaction', 'users', 'paymentMethods'));
+}
+public function update(Request $request, $id)
+{
+    $request->validate([
+        'user_id' => 'required|exists:users,id',
+        'id_PaymentMethod' => 'required|exists:payment_methods,id_PaymentMethod',
+        'total' => 'required|numeric|min:0',
+        'paid' => 'required|numeric|min:0',
+        'change' => 'required|numeric|min:0',
+    ]);
+
+    $transaction = Transaction::findOrFail($id);
+    $transaction->update([
+        'user_id' => $request->user_id,
+        'id_PaymentMethod' => $request->id_PaymentMethod,
+        'total' => $request->total,
+        'paid' => $request->paid,
+        'change' => $request->change,
+    ]);
+
+    return redirect()->route('transactions.index')->with('success', 'Transaksi berhasil diperbarui!');
+
+}
 }

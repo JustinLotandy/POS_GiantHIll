@@ -8,6 +8,14 @@ use Illuminate\Support\Str;
 
 class CategoryController extends Controller
 {
+    public function __construct()
+    {
+        $this->middleware('permission:categories.lihat')->only('index');
+        $this->middleware('permission:categories.tambah')->only(['create', 'store']);
+        $this->middleware('permission:categories.edit')->only(['edit', 'update']);
+        $this->middleware('permission:categories.hapus')->only('destroy');
+    }
+
     public function index()
     {
         $categories = Category::all();

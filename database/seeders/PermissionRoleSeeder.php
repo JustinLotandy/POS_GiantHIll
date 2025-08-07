@@ -10,33 +10,41 @@ class PermissionRoleSeeder extends Seeder
 {
     public function run()
     {
-        // Daftar fitur & aksi yang ingin kamu generate
         $fiturs = [
-            'products', 'categories', 'transactions', 'users'
-        ];
-        $aksis = [
-            'lihat', 'tambah', 'edit', 'hapus'
+            'products', 'categories', 'transactions', 'users',
+            'payment_methods', 'roles', 'laporan', 'dashboard', 'pos'
         ];
 
-        // Generate permission untuk setiap fitur dan aksi
-        foreach ($fiturs as $fitur) {
+        $aksisPerFitur = [
+            'products' => ['lihat', 'tambah', 'edit', 'hapus'],
+            'categories' => ['lihat', 'tambah', 'edit', 'hapus'],
+            'transactions' => ['lihat', 'tambah', 'edit', 'hapus'],
+            'users' => ['lihat', 'tambah', 'edit', 'hapus'],
+            'payment_methods' => ['lihat', 'tambah', 'edit', 'hapus'],
+            'roles' => ['lihat', 'tambah', 'edit', 'hapus'],
+            'laporan' => ['harian', 'mingguan', 'bulanan'],
+            'dashboard' => ['lihat'],
+            'pos' => ['transaksi']
+        ];
+
+        foreach ($aksisPerFitur as $fitur => $aksis) {
             foreach ($aksis as $aksi) {
                 Permission::firstOrCreate(['name' => "{$fitur}.{$aksi}"]);
             }
         }
 
-        // Bikin role 'admin' dan assign semua permission
+        // Role Admin
         $admin = Role::firstOrCreate(['name' => 'admin']);
         $admin->syncPermissions(Permission::all());
 
-        // Contoh role kasir hanya bisa transaksi & lihat produk
-        $kasir = Role::firstOrCreate(['name' => 'kasir']);
+        // Role Kasir
         $kasirPermissions = Permission::whereIn('name', [
-            'transactions.lihat',
-            'transactions.tambah',
-            'transactions.edit',
+            'transactions.lihat', 'transactions.tambah', 'transactions.edit',
             'products.lihat',
+            'pos.transaksi',
         ])->get();
+
+        $kasir = Role::firstOrCreate(['name' => 'kasir']);
         $kasir->syncPermissions($kasirPermissions);
     }
 }
