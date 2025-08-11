@@ -82,12 +82,24 @@
                     <span>Subtotal</span>
                     <span>Rp {{ number_format(array_sum(array_map(fn($i) => $i['qty'] * $i['harga_sesudah'], $cart)),0,',','.') }}</span>
                 </div>
-                <form action="{{ route('pos.checkout') }}" method="GET" class="mt-4">
+               <form id="form-scan" action="{{ route('pos.cariBarcode') }}" method="POST" class="mb-4 flex gap-2">
                     @csrf
-                    <button class="w-full py-3 bg-orange-500 text-white font-bold rounded-lg hover:bg-orange-600 transition text-lg">
-                        Proses Pembayaran
-                    </button>
+                    <input id="scan-barcode" name="barcode" type="text" autofocus
+                        class="w-full md:w-2/3 px-4 py-2 rounded border border-gray-300 focus:outline-blue-500"
+                        placeholder="Scan barcode produk atau cari nama/SKU...">
+                    <button type="submit" class="bg-blue-500 px-4 py-2 text-white rounded hover:bg-blue-600 transition">Scan</button>
                 </form>
+
+                <script>
+                const input = document.getElementById('scan-barcode');
+                const form  = document.getElementById('form-scan');
+                input.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter' || e.key === 'Tab') {
+                    e.preventDefault();
+                    if (input.value.trim() !== '') form.submit();
+                }
+                });
+                </script>
             </div>
         </div>
     </div>
