@@ -10,7 +10,7 @@ use Illuminate\Support\Facades\DB;
 use App\Models\PaymentMethod;
 use Illuminate\Support\Str;
 use App\Models\User;
-
+use Carbon\Carbon;
 class TransactionController extends Controller
 {
    public function __construct()
@@ -251,23 +251,27 @@ public function edit($id)
 public function update(Request $request, $id)
 {
     $request->validate([
-        'user_id' => 'required|exists:users,id',
         'id_PaymentMethod' => 'required|exists:payment_methods,id_PaymentMethod',
-        'total' => 'required|numeric|min:0',
-        'paid' => 'required|numeric|min:0',
-        'change' => 'required|numeric|min:0',
+        'total'   => 'required|numeric|min:0',
+        'paid'    => 'required|numeric|min:0',
+        'change'  => 'required|numeric|min:0',
+        'created_at' => 'required|date', // ← VALIDASI TANGGAL (edit saja)
     ]);
 
-    $transaction = Transaction::findOrFail($id);
-    $transaction->update([
-        'user_id' => $request->user_id,
-        'id_PaymentMethod' => $request->id_PaymentMethod,
-        'total' => $request->total,
-        'paid' => $request->paid,
-        'change' => $request->change,
-    ]);
+    $transaction = \App\Models\Transaction::findOrFail($id);
 
-    return redirect()->route('transactions.index')->with('success', 'Transaksi berhasil diperbarui!');
+    // field biasa
+    $transaction->id_PaymentMethod = $request->id_PaymentMethod;
+    $transaction->total  = $request->total;
+    $transaction->paid   = $request->paid;
+    $transaction->change = $request->change;
 
+    // tanggal transaksi (pakai created_at)
+    $transaction->created_at = Carbon::parse($request->created_at);
+
+    $transaction->save();
+
+    return redirect()->route('transactions.index')
+        ->with('success', 'Transaksi & tanggal berhasil diperbarui!');
 }
 }

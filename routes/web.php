@@ -74,6 +74,13 @@ Route::middleware('auth')->group(function () {
     Route::get('/laporan/harian', [ReportController::class, 'harian'])->middleware('permission:laporan.harian')->name('laporan.harian');
     Route::get('/laporan/mingguan', [ReportController::class, 'mingguan'])->middleware('permission:laporan.mingguan')->name('laporan.mingguan');
     Route::get('/laporan/bulanan', [ReportController::class, 'bulanan'])->middleware('permission:laporan.bulanan')->name('laporan.bulanan');
+    Route::get('/laporan/tahunan', [ReportController::class, 'tahunan'])->name('laporan.tahunan');
+
+    Route::get('/laporan/preview/harian',   [ReportController::class, 'previewHarian'])->name('laporan.preview.harian');
+    Route::get('/laporan/preview/mingguan', [ReportController::class, 'previewMingguan'])->name('laporan.preview.mingguan');
+    Route::get('/laporan/preview/bulanan',  [ReportController::class, 'previewBulanan'])->name('laporan.preview.bulanan');
+    Route::get('/laporan/preview/tahunan',  [ReportController::class, 'previewTahunan'])->name('laporan.preview.tahunan');
+
 
     Route::get('/roles/{role}/edit', [RoleController::class, 'edit'])->name('roles.edit');
 

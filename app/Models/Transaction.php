@@ -25,7 +25,10 @@ class Transaction extends Model
         'paid',
         'change',
     ];
-
+    protected $casts = [
+        'created_at' => 'datetime',
+        'updated_at' => 'datetime',
+    ];
     // Relasi ke User
     public function user()
     {

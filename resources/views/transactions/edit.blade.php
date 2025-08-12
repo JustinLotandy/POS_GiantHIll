@@ -37,6 +37,19 @@
                 <label class="block mb-1 font-semibold">Kembalian</label>
                 <input type="number" step="0.01" name="change" class="w-full border border-gray-300 rounded px-3 py-2" value="{{ old('change', $transaction->change) }}" required>
             </div>
+            <div>
+                <label class="block mb-1 font-semibold">Tanggal Transaksi</label>
+                <input
+                    type="datetime-local"
+                    name="created_at"
+                    value="{{ old('created_at', optional($transaction->created_at)->format('Y-m-d\TH:i')) }}"
+                    class="w-full border border-gray-300 rounded px-3 py-2"
+                    required
+                >
+                @error('created_at')
+                <p class="text-sm text-red-600 mt-1">{{ $message }}</p>
+                @enderror
+            </div>
             <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition">Update</button>
             <a href="{{ route('transactions.index') }}" class="ml-2 text-gray-700">Batal</a>
         </form>
