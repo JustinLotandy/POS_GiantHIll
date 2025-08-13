@@ -10,9 +10,9 @@
                 <span class="font-bold">Point of Sales</span>
                 <span class="text-xs">Transaksi Cepat</span>
             </a>
-            <a href="{{ route('laporan.index') }}" class="bg-gradient-to-br from-green-400 to-blue-600 text-white rounded-2xl p-6 shadow flex flex-col items-center hover:scale-105 transition hover:ring-4 ring-green-300 focus:outline-none">
+            <a href="{{ route('laporan.index') }}" class="bg-gradient-to-br from-green-400 to-green-600 text-white rounded-2xl p-6 shadow flex flex-col items-center hover:scale-105 transition hover:ring-4 ring-green-300 focus:outline-none">
                 <svg class="w-8 h-8 mb-2" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M8 6v6h6" /></svg>
-                <span class="font-bold">Laporan</span>
+                <span class="font-bold">Laporan Keuangan</span>
                 <span class="text-xs">Monitoring Omzet</span>
             </a>
             <a href="{{ route('products.index') }}" class="bg-gradient-to-br from-orange-400 to-orange-600 text-white rounded-2xl p-6 shadow flex flex-col items-center hover:scale-105 transition hover:ring-4 ring-orange-300 focus:outline-none">
