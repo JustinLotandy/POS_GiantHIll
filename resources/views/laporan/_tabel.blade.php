@@ -13,15 +13,17 @@
   <tbody>
     @php($gTotal = 0)
     @forelse($data as $row)
-      @php($gTotal += $row->total)
+      @php($gTotal += (int)($row->total ?? 0))
       <tr class="border-t">
-        <td class="px-3 py-2">{{ $row->id }}</td>
+        <td class="px-3 py-2">{{ $row->id_Transaction }}</td>
         <td class="px-3 py-2">{{ $row->user->name ?? '-' }}</td>
         <td class="px-3 py-2 text-center">{{ $row->paymentMethod->name_payment ?? '-' }}</td>
         <td class="px-3 py-2 text-right">Rp {{ number_format($row->total,0,',','.') }}</td>
         <td class="px-3 py-2 text-right">Rp {{ number_format($row->paid,0,',','.') }}</td>
         <td class="px-3 py-2 text-right">Rp {{ number_format($row->change,0,',','.') }}</td>
-        <td class="px-3 py-2">{{ $row->created_at->timezone('Asia/Jakarta')->format('Y-m-d H:i:s') }}</td>
+        <td class="px-3 py-2">
+          {{ optional($row->created_at)->timezone('Asia/Jakarta')->format('Y-m-d H:i:s') }}
+        </td>
       </tr>
     @empty
       <tr>

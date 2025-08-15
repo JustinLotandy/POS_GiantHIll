@@ -38,7 +38,7 @@
                     <td class="right">Rp {{ number_format($trx->total,0,',','.') }}</td>
                     <td class="right">Rp {{ number_format($trx->paid,0,',','.') }}</td>
                     <td class="right">Rp {{ number_format($trx->change,0,',','.') }}</td>
-                    <td>{{ $trx->created_at }}</td>
+                    <td>{{ optional($trx->created_at)->timezone('Asia/Jakarta')->format('Y-m-d H:i:s') }}</td>
                 </tr>
             @empty
                 <tr><td colspan="8" style="text-align:center">Tidak ada data transaksi</td></tr>

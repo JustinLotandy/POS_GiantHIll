@@ -2,24 +2,27 @@
   <x-slot name="header">
     <h2 class="font-semibold text-xl text-gray-800 leading-tight">Cetak Laporan Transaksi</h2>
   </x-slot>
-<style>
-  .btn-base { padding: .5rem 1rem; border-radius: .5rem; font-weight:600; }
-</style>
+
+  {{-- Jika proyek-mu tidak memuat Alpine via Vite/Breeze, aktifkan CDN di bawah --}}
+  <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+
+  <style>
+    .btn-base { padding:.5rem 1rem; border-radius:.5rem; font-weight:600; }
+  </style>
 
   <div class="max-w-6xl mx-auto py-8 px-4">
-    <div x-data="reportUI()" class="bg-white rounded-2xl shadow p-6 space-y-6">
+    {{-- x-init untuk auto-load preview pertama kali --}}
+    <div x-data="reportUI()" x-init="loadPreview()" class="bg-white rounded-2xl shadow p-6 space-y-6">
 
-      <!-- Toolbar: tombol kesamping -->
-        <div class="flex flex-wrap gap-3">
-            <button @click="setTab('harian')"   :class="btnClass('harian','active-blue')"   class="btn-base">Harian</button>
-            <button @click="setTab('mingguan')" :class="btnClass('mingguan','active-green')" class="btn-base">Mingguan</button>
-            <button @click="setTab('bulanan')"  :class="btnClass('bulanan','active-orange')" class="btn-base">Bulanan</button>
-            <button @click="setTab('tahunan')"  :class="btnClass('tahunan','active-purple')" class="btn-base">Tahunan</button>
-        </div>
-      <!-- Bar filter + aksi untuk tab aktif -->
+      <div class="flex flex-wrap gap-3">
+        <button @click="setTab('harian')"   :class="btnClass('harian','active-blue')"   class="btn-base">Harian</button>
+        <button @click="setTab('mingguan')" :class="btnClass('mingguan','active-green')" class="btn-base">Mingguan</button>
+        <button @click="setTab('bulanan')"  :class="btnClass('bulanan','active-orange')" class="btn-base">Bulanan</button>
+        <button @click="setTab('tahunan')"  :class="btnClass('tahunan','active-purple')" class="btn-base">Tahunan</button>
+      </div>
+
       <div class="flex flex-wrap items-end justify-between gap-4 border-b pb-4">
         <div class="flex items-end gap-3">
-          <!-- Harian -->
           <template x-if="active==='harian'">
             <div>
               <label class="block text-sm font-semibold mb-1">Tanggal</label>
@@ -27,7 +30,6 @@
             </div>
           </template>
 
-          <!-- Mingguan -->
           <template x-if="active==='mingguan'">
             <div>
               <label class="block text-sm font-semibold mb-1">Minggu (ISO)</label>
@@ -35,7 +37,6 @@
             </div>
           </template>
 
-          <!-- Bulanan -->
           <template x-if="active==='bulanan'">
             <div>
               <label class="block text-sm font-semibold mb-1">Bulan</label>
@@ -43,31 +44,25 @@
             </div>
           </template>
 
-          <!-- Tahunan -->
           <template x-if="active==='tahunan'">
-           <div class="relative inline-block">
-            <select x-model="form.tahun"
-                    class="border rounded-lg px-3 py-2 pr-10 bg-white
-                            ring-1 ring-gray-300
-                            appearance-none
-                            focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+            <div class="relative inline-block">
+              <select x-model="form.tahun"
+                class="border rounded-lg px-3 py-2 pr-10 ring-1 ring-gray-300 appearance-none
+                       focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
                 @for($y = now('Asia/Jakarta')->year; $y >= now('Asia/Jakarta')->year - 5; $y--)
-                <option value="{{ $y }}">{{ $y }}</option>
+                  <option value="{{ $y }}">{{ $y }}</option>
                 @endfor
-            </select>
-
-            <!-- ikon panah custom -->
-            <svg class="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500"
-                viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-                <path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 10.94l3.71-3.71a.75.75 0 111.06 1.06l-4.24 4.24a.75.75 0 01-1.06 0L5.21 8.29a.75.75 0 01.02-1.08z" clip-rule="evenodd"/>
-            </svg>
+              </select>
+              <svg class="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500"
+                   viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd"
+                   d="M5.23 7.21a.75.75 0 011.06.02L10 10.94l3.71-3.71a.75.75 0 111.06 1.06l-4.24 4.24a.75.75 0 01-1.06 0L5.21 8.29a.75.75 0 01.02-1.08z"
+                   clip-rule="evenodd"/></svg>
             </div>
           </template>
 
           <button @click="loadPreview()" class="px-4 py-2 rounded-lg bg-gray-800 text-white hover:bg-black">Review</button>
         </div>
 
-        <!-- Cetak PDF (action berubah sesuai tab) -->
         <form :action="printAction()" method="GET" target="_blank" @submit="syncForm($event)">
           <input type="hidden" name="tanggal" :value="form.tanggal">
           <input type="hidden" name="minggu"  :value="form.minggu">
@@ -77,7 +72,6 @@
         </form>
       </div>
 
-      <!-- PREVIEW TABEL: lebih lega -->
       <div class="rounded-xl border bg-gray-50">
         <div class="px-4 py-3 text-sm text-gray-600 flex items-center gap-2">
           <span x-text="subtitle()"></span>
@@ -90,23 +84,86 @@
   </div>
 
   <script>
-function reportUI(){
-  return {
-    active: 'harian',
-    // ...
-    btnClass(tab, activeKey){
-      const activeMap = {
-        'active-blue':   'bg-blue-600 text-white hover:bg-blue-700',
-        'active-green':  'bg-green-600 text-white hover:bg-green-700',
-        'active-orange': 'bg-orange-500 text-white hover:bg-orange-600',
-        'active-purple': 'bg-purple-600 text-white hover:bg-purple-700',
-      };
-      const idle = 'bg-gray-200 text-gray-700 hover:bg-gray-300';
-      return (this.active === tab) ? activeMap[activeKey] : idle;
-    },
-    setTab(t){ this.active = t; },
-    // ... (fungsi lain tetap)
+  function reportUI(){
+    const today = new Date().toISOString().slice(0,10);         // YYYY-MM-DD
+    const getIsoWeek = () => {
+      const d = new Date(); d.setHours(0,0,0,0);
+      d.setDate(d.getDate() + 3 - ((d.getDay()+6)%7));
+      const week1 = new Date(d.getFullYear(),0,4);
+      const week = 1 + Math.round(((d.getTime()-week1.getTime())/86400000 - 3 + ((week1.getDay()+6)%7)) / 7);
+      return d.getFullYear() + '-W' + ('0'+week).slice(-2);
+    };
+
+    return {
+      active: 'harian',
+      loading: false,
+      form: { tanggal: today, minggu: getIsoWeek(), bulan: today.slice(0,7), tahun: new Date().getFullYear().toString() },
+
+      btnClass(tab, key){
+        const activeMap = {
+          'active-blue':   'bg-blue-600 text-white hover:bg-blue-700',
+          'active-green':  'bg-green-600 text-white hover:bg-green-700',
+          'active-orange': 'bg-orange-500 text-white hover:bg-orange-600',
+          'active-purple': 'bg-purple-600 text-white hover:bg-purple-700',
+        };
+        const idle = 'bg-gray-200 text-gray-700 hover:bg-gray-300';
+        return (this.active === tab) ? activeMap[key] : idle;
+      },
+
+      setTab(t){ this.active = t; this.loadPreview(); },
+
+      subtitle(){
+        if (this.active==='harian')  return 'Preview harian: ' + this.form.tanggal;
+        if (this.active==='mingguan')return 'Preview minggu: ' + this.form.minggu;
+        if (this.active==='bulanan') return 'Preview bulan: ' + this.form.bulan;
+        return 'Preview tahun: ' + this.form.tahun;
+      },
+
+      previewUrl(){
+        if (this.active==='harian')  return '{{ route('laporan.preview.harian') }}?tanggal=' + encodeURIComponent(this.form.tanggal);
+        if (this.active==='mingguan')return '{{ route('laporan.preview.mingguan') }}?minggu='  + encodeURIComponent(this.form.minggu);
+        if (this.active==='bulanan') return '{{ route('laporan.preview.bulanan') }}?bulan='   + encodeURIComponent(this.form.bulan);
+        return '{{ route('laporan.preview.tahunan') }}?tahun=' + encodeURIComponent(this.form.tahun);
+      },
+
+      printAction(){
+        if (this.active==='harian')  return '{{ route('laporan.harian') }}';
+        if (this.active==='mingguan')return '{{ route('laporan.mingguan') }}';
+        if (this.active==='bulanan') return '{{ route('laporan.bulanan') }}';
+        return '{{ route('laporan.tahunan') }}';
+      },
+
+      syncForm(e){ /* hidden input sudah di-bind */ },
+
+      async loadPreview(){
+        this.loading = true;
+        try{
+          const base = this.previewUrl();
+          const url = base + (base.includes('?') ? '&' : '?') + '_t=' + Date.now();
+
+          const res = await fetch(url, { headers: { 'X-Requested-With': 'XMLHttpRequest' }});
+
+          if (!res.ok) {
+            const txt = await res.text();
+            document.getElementById('preview').innerHTML =
+              '<div class="p-6 text-red-600">Preview gagal: ' + res.status + ' ' + res.statusText +
+              '<pre style="white-space:pre-wrap;margin-top:8px;background:#fff7f7;border:1px solid #fcc;padding:8px;">'
+              + txt.substring(0,1000) + '</pre></div>';
+            return;
+          }
+
+          const html = await res.text();
+          document.getElementById('preview').innerHTML =
+            html?.trim() ? html : '<div class="p-6 text-gray-500">Tidak ada data untuk periode tersebut.</div>';
+
+        } catch (err){
+          document.getElementById('preview').innerHTML =
+            '<div class="p-6 text-red-600">Gagal memuat preview: '+ (err?.message||'unknown') +'</div>';
+        } finally{
+          this.loading = false;
+        }
+      }
+    }
   }
-}
-</script>
+  </script>
 </x-app-layout>
