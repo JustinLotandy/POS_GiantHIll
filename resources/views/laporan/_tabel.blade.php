@@ -1,5 +1,3 @@
-{{-- resources/views/laporan/_tabel.blade.php --}}
-
 {{-- Ringkasan --}}
 <div class="grid grid-cols-1 md:grid-cols-3 gap-3 p-4">
   <div class="rounded-xl border bg-white p-4">
@@ -26,14 +24,14 @@
   <thead class="bg-gray-50">
     <tr>
       <th class="px-3 py-2 text-left">ID</th>
+      <th class="px-3 py-2">Tanggal</th>
       <th class="px-3 py-2 text-left">User</th>
-      <th class="px-3 py-2 text-center">Metode</th>
       <th class="px-3 py-2 text-left">Produk</th>
-      <th class="px-3 py-2 text-right">Profit</th>
+      <th class="px-3 py-2 text-center">Metode</th>
       <th class="px-3 py-2 text-right">Total</th>
       <th class="px-3 py-2 text-right">Dibayar</th>
       <th class="px-3 py-2 text-right">Kembalian</th>
-      <th class="px-3 py-2">Tanggal</th>
+      <th class="px-3 py-2 text-right">Profit</th>
     </tr>
   </thead>
 
@@ -47,18 +45,16 @@
 
       <tr class="border-t align-top">
         <td class="px-3 py-2">{{ $row->id_Transaction }}</td>
-        <td class="px-3 py-2">{{ $row->user->name ?? '-' }}</td>
-        <td class="px-3 py-2 text-center">{{ $row->paymentMethod->name_payment ?? '-' }}</td>
-        <td class="px-3 py-2">
-          {!! $row->products_label_html ?? '' !!} {{-- tampil ke bawah dengan <br> --}}
-        </td>
-        <td class="px-3 py-2 text-right">Rp {{ number_format($row->total_profit ?? 0, 0, ',', '.') }}</td>
-        <td class="px-3 py-2 text-right">Rp {{ number_format($row->total ?? 0, 0, ',', '.') }}</td>
-        <td class="px-3 py-2 text-right">Rp {{ number_format($row->paid ?? 0, 0, ',', '.') }}</td>
-        <td class="px-3 py-2 text-right">Rp {{ number_format($row->change ?? 0, 0, ',', '.') }}</td>
         <td class="px-3 py-2">
           {{ optional($row->created_at)->timezone('Asia/Jakarta')->format('Y-m-d H:i:s') }}
         </td>
+        <td class="px-3 py-2">{{ $row->user->name ?? '-' }}</td>
+        <td class="px-3 py-2">{!! $row->products_label_html ?? '' !!}</td>
+        <td class="px-3 py-2 text-center">{{ $row->paymentMethod->name_payment ?? '-' }}</td>
+        <td class="px-3 py-2 text-right">Rp {{ number_format($row->total ?? 0, 0, ',', '.') }}</td>
+        <td class="px-3 py-2 text-right">Rp {{ number_format($row->paid ?? 0, 0, ',', '.') }}</td>
+        <td class="px-3 py-2 text-right">Rp {{ number_format($row->change ?? 0, 0, ',', '.') }}</td>
+        <td class="px-3 py-2 text-right">Rp {{ number_format($row->total_profit ?? 0, 0, ',', '.') }}</td>
       </tr>
     @empty
       <tr>
@@ -69,10 +65,11 @@
 
   <tfoot>
     <tr class="border-t font-semibold bg-gray-50">
-      <td colspan="4" class="px-3 py-2 text-right">Grand Total</td>
-      <td class="px-3 py-2 text-right">Rp {{ number_format($gProfit, 0, ',', '.') }}</td>
+      <td colspan="5" class="px-3 py-2 text-right">Grand Total</td>
       <td class="px-3 py-2 text-right">Rp {{ number_format($gTotal, 0, ',', '.') }}</td>
-      <td colspan="3"></td>
+      <td class="px-3 py-2"></td>
+      <td class="px-3 py-2"></td>
+      <td class="px-3 py-2 text-right">Rp {{ number_format($gProfit, 0, ',', '.') }}</td>
     </tr>
   </tfoot>
 </table>

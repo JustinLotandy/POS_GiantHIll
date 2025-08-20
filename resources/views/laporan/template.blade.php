@@ -26,46 +26,45 @@
     <table>
         <thead>
             <tr>
-                <th>No</th>
-                <th>ID Transaksi</th>
+                <th>ID</th>
+                <th>Tanggal</th>
                 <th>User</th>
-                <th>Metode</th>
                 <th>Produk</th>
-                <th class="right">Profit</th>
+                <th>Metode</th>
                 <th class="right">Total</th>
                 <th class="right">Dibayar</th>
-                <th class="right">Kembali</th>
-                <th>Tanggal</th>
+                <th class="right">Kembalian</th>
+                <th class="right">Profit</th>
             </tr>
         </thead>
         <tbody>
             @php($gTotal = 0)
             @php($gProfit = 0)
-            @forelse($transaksi as $no => $trx)
+            @forelse($transaksi as $trx)
                 @php($gTotal  += (int)($trx->total ?? 0))
                 @php($gProfit += (int)($trx->total_profit ?? 0))
                 <tr>
-                    <td>{{ $no + 1 }}</td>
                     <td>{{ $trx->id_Transaction }}</td>
-                    <td>{{ $trx->user->name ?? '-' }}</td>
-                    <td>{{ $trx->paymentMethod->name_payment ?? '-' }}</td>
-                    <td>{!! $trx->products_label_html ?? '' !!}</td> {{-- tampil ke bawah --}}
-                    <td class="right">Rp {{ number_format($trx->total_profit ?? 0,0,',','.') }}</td>
-                    <td class="right">Rp {{ number_format($trx->total,0,',','.') }}</td>
-                    <td class="right">Rp {{ number_format($trx->paid,0,',','.') }}</td>
-                    <td class="right">Rp {{ number_format($trx->change,0,',','.') }}</td>
                     <td>{{ optional($trx->created_at)->timezone('Asia/Jakarta')->format('Y-m-d H:i:s') }}</td>
+                    <td>{{ $trx->user->name ?? '-' }}</td>
+                    <td>{!! $trx->products_label_html ?? '' !!}</td>
+                    <td>{{ $trx->paymentMethod->name_payment ?? '-' }}</td>
+                    <td class="right">Rp {{ number_format($trx->total ?? 0,0,',','.') }}</td>
+                    <td class="right">Rp {{ number_format($trx->paid ?? 0,0,',','.') }}</td>
+                    <td class="right">Rp {{ number_format($trx->change ?? 0,0,',','.') }}</td>
+                    <td class="right">Rp {{ number_format($trx->total_profit ?? 0,0,',','.') }}</td>
                 </tr>
             @empty
-                <tr><td colspan="10" style="text-align:center">Tidak ada data transaksi</td></tr>
+                <tr><td colspan="9" style="text-align:center">Tidak ada data transaksi</td></tr>
             @endforelse
         </tbody>
         <tfoot>
             <tr>
                 <th colspan="5" class="right">Grand Total</th>
-                <th class="right">Rp {{ number_format($gProfit,0,',','.') }}</th>
                 <th class="right">Rp {{ number_format($gTotal,0,',','.') }}</th>
-                <th colspan="3"></th>
+                <th></th>
+                <th></th>
+                <th class="right">Rp {{ number_format($gProfit,0,',','.') }}</th>
             </tr>
         </tfoot>
     </table>
