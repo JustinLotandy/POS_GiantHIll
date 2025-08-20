@@ -1,6 +1,6 @@
 {{-- resources/views/dashboard.blade.php --}}
 @php
-    // Ambil data low stock langsung di view agar langsung berfungsi
+    // Ambil data low-stock langsung di view agar langsung berfungsi
     try {
         $lowStocks = \App\Models\Product::where('stock', '<', 15)
             ->orderBy('stock', 'asc')
@@ -13,82 +13,127 @@
     }
 @endphp
 
-{{-- Alpine.js untuk animasi/timer (aman jika sudah dimuat di layout—boleh tetap dibiarkan) --}}
+{{-- Alpine.js untuk animasi & timer toast (aman bila sudah dimuat—baris ini tetap boleh ada) --}}
 <script src="https://unpkg.com/alpinejs" defer></script>
 <style>[x-cloak]{ display:none !important; }</style>
 
 <x-app-layout>
     <x-slot name="header">
-        <h2 class="font-semibold text-xl text-gray-800 leading-tight">
-            Dashboard
-        </h2>
+        <h2 class="font-semibold text-2xl text-gray-800 leading-tight">Dashboard </h2>
     </x-slot>
 
-    <div class="py-6">
-        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8 space-y-6">
-            {{-- ====== Konten dashboard kamu di sini ====== --}}
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg p-6">
-                    <div class="text-gray-900 dark:text-gray-100 font-semibold">Selamat datang 👋</div>
-                    <div class="text-sm text-gray-600 dark:text-gray-300 mt-2">Ini adalah beranda dashboard.</div>
-                </div>
-                {{-- ... kartu lain kalau ada ... --}}
+    <div class="py-6 px-4 md:px-10">
+        {{-- Fitur utama POS --}}
+        <div class="grid grid-cols-2 md:grid-cols-5 gap-6 mb-8">
+            <a href="{{ route('pos.index') }}" class="bg-gradient-to-br from-blue-500 to-blue-700 text-white rounded-2xl p-6 shadow flex flex-col items-center hover:scale-105 transition hover:ring-4 ring-blue-300 focus:outline-none">
+                <svg class="w-8 h-8 mb-2" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M3 3h18v4H3V3zm0 6h18v13H3V9z" /></svg>
+                <span class="font-bold">Point of Sales</span>
+                <span class="text-xs">Transaksi Cepat</span>
+            </a>
+            <a href="{{ route('laporan.index') }}" class="bg-gradient-to-br from-green-400 to-green-600 text-white rounded-2xl p-6 shadow flex flex-col items-center hover:scale-105 transition hover:ring-4 ring-green-300 focus:outline-none">
+                <svg class="w-8 h-8 mb-2" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M8 6v6h6" /></svg>
+                <span class="font-bold">Laporan</span>
+                <span class="text-xs">Monitoring Omzet</span>
+            </a>
+            <a href="{{ route('products.index') }}" class="bg-gradient-to-br from-orange-400 to-orange-600 text-white rounded-2xl p-6 shadow flex flex-col items-center hover:scale-105 transition hover:ring-4 ring-orange-300 focus:outline-none">
+                <svg class="w-8 h-8 mb-2" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 19V6h13" /></svg>
+                <span class="font-bold">Produk</span>
+                <span class="text-xs">Kelola Barang</span>
+            </a>
+            <a href="{{ route('categories.index') }}" class="bg-gradient-to-br from-purple-400 to-purple-600 text-white rounded-2xl p-6 shadow flex flex-col items-center hover:scale-105 transition hover:ring-4 ring-purple-300 focus:outline-none">
+                <svg class="w-8 h-8 mb-2" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M7 8v13h13" /></svg>
+                <span class="font-bold">Kategori</span>
+                <span class="text-xs">Kelola Kategori</span>
+            </a>
+            <a href="{{ route('payment_methods.index') }}" class="bg-gradient-to-br from-pink-400 to-pink-600 text-white rounded-2xl p-6 shadow flex flex-col items-center hover:scale-105 transition hover:ring-4 ring-pink-300 focus:outline-none">
+                <svg class="w-8 h-8 mb-2" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M17 17v1a3 3 0 0 1-3 3H6a3 3 0 0 1-3-3V8a3 3 0 0 1 3-3h1" /></svg>
+                <span class="font-bold">Metode Pembayaran</span>
+                <span class="text-xs">Pengaturan Payment</span>
+            </a>
+        </div>
+
+        {{-- Ringkasan --}}
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-10">
+            <div class="bg-white rounded-xl shadow p-6 text-center hover:ring-2 ring-blue-400 transition">
+                <div class="text-3xl font-extrabold mb-2">{{ $totalProduk }}</div>
+                <div class="text-gray-500">Total Produk</div>
             </div>
+            <div class="bg-white rounded-xl shadow p-6 text-center hover:ring-2 ring-purple-400 transition">
+                <div class="text-3xl font-extrabold mb-2">{{ $totalKategori }}</div>
+                <div class="text-gray-500">Total Kategori</div>
+            </div>
+            <div class="bg-white rounded-xl shadow p-6 text-center hover:ring-2 ring-orange-400 transition">
+                <div class="text-3xl font-extrabold mb-2">{{ $totalTransaksiHariIni }}</div>
+                <div class="text-gray-500">Transaksi Hari Ini</div>
+            </div>
+            <div class="bg-white rounded-xl shadow p-6 text-center hover:ring-2 ring-green-400 transition">
+                <div class="text-3xl font-extrabold mb-2">Rp {{ number_format($totalOmzetHariIni,0,',','.') }}</div>
+                <div class="text-gray-500">Omzet Hari Ini</div>
+            </div>
+        </div>
+
+        {{-- Grafik omzet --}}
+        <div class="bg-white rounded-xl shadow p-6 mb-10">
+            <h3 class="font-semibold text-lg mb-3">Grafik Omzet 7 Hari Terakhir</h3>
+            <canvas id="grafikOmzet" height="70"></canvas>
+        </div>
+
+        {{-- Stok Minimum --}}
+        <div class="bg-white rounded-xl shadow p-6">
+            <h3 class="font-semibold text-lg mb-4">Stok Minimum (5 Produk Terendah)</h3>
+            <table class="w-full text-left">
+                <thead>
+                    <tr>
+                        <th class="py-2">ID Produk</th>
+                        <th class="py-2">Nama</th>
+                        <th class="py-2">Stok</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach($produkStokMinimum as $produk)
+                        <tr>
+                            <td class="py-1">{{ $produk->id_Produk }}</td>
+                            <td class="py-1">{{ $produk->name }}</td>
+                            <td class="py-1">{{ $produk->stock }}</td>
+                        </tr>
+                    @endforeach
+                </tbody>
+            </table>
         </div>
     </div>
 
-    {{-- ====== TOAST LOW STOCK: MUNCUL 10 DETIK DI KANAN ATAS ====== --}}
-    @if($lowStockCount > 0)
-    <div
-        x-data="{ show: true }"
-        x-init="setTimeout(() => show = false, 10000)"  {{-- 10.000 ms = 10 detik --}}
-        x-show="show"
-        x-cloak
-        x-transition:enter="transition ease-out duration-300"
-        x-transition:enter-start="opacity-0 -translate-y-2"
-        x-transition:enter-end="opacity-100 translate-y-0"
-        x-transition:leave="transition ease-in duration-200"
-        x-transition:leave-start="opacity-100 translate-y-0"
-        x-transition:leave-end="opacity-0 -translate-y-2"
-        class="fixed top-16 right-5 z-[1000] w-96 max-w-[95vw] bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl shadow-lg"
-        role="status"
-        aria-live="polite"
-    >
-        <div class="px-4 py-3 border-b border-gray-100 dark:border-gray-700 flex items-center justify-between">
-            <div class="font-semibold text-gray-800 dark:text-gray-100">
-                Notifikasi Stok Rendah
-            </div>
-            <button
-                class="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
-                @click="show=false"
-                aria-label="Tutup notifikasi"
-                title="Tutup"
-            >✕</button>
-        </div>
+    {{-- Chart.js --}}
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        const ctx = document.getElementById('grafikOmzet').getContext('2d');
+        new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: {!! json_encode($labels) !!},
+                datasets: [{
+                    label: 'Omzet (Rp)',
+                    data: {!! json_encode($dataOmzet) !!},
+                    borderColor: '#3b82f6',
+                    backgroundColor: 'rgba(59,130,246,0.1)',
+                    tension: 0.4,
+                    pointRadius: 5,
+                    pointBackgroundColor: '#3b82f6',
+                    fill: true
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: { legend: { display: false }},
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: { callback: v => 'Rp ' + v.toLocaleString('id-ID') }
+                    }
+                }
+            }
+        });
+    </script>
 
-        <div class="px-4 py-3">
-            <div class="text-sm text-gray-700 dark:text-gray-300 mb-2">
-                {{ $lowStockCount }} produk stok &lt; 15. Beberapa di antaranya:
-            </div>
-
-            <ul class="text-sm text-gray-700 dark:text-gray-300 space-y-1 max-h-44 overflow-auto">
-                @foreach($lowStocks as $p)
-                    <li class="flex justify-between">
-                        <span>{{ $p->name }}</span>
-                        <span class="ml-2 text-xs px-2 py-0.5 rounded-full
-                            @if($p->stock <= 0) bg-red-600 text-white
-                            @elseif($p->stock < 5) bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300
-                            @else bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-300 @endif">
-                            Stok: {{ $p->stock }}
-                        </span>
-                    </li>
-                @endforeach
-            </ul>
-
-            <div class="mt-3 text-[11px] text-gray-500 dark:text-gray-400">
-                Notifikasi ini akan tertutup otomatis dalam 10 detik.
-            </div>
-        </div>
-    </div>
-    @endif
+    {{-- TOAST LOW-STOCK: muncul 10 detik di kanan atas --}}
+    @include('partials.lowstock-toast', ['lowStocks' => $lowStocks, 'lowStockCount' => $lowStockCount])
 </x-app-layout>
