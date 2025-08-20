@@ -41,7 +41,7 @@
                   class="relative inline-flex items-center px-3 py-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 focus:outline-none"
                   aria-label="Notifikasi stok rendah">
             <span class="{{ $has ? 'text-red-600' : 'text-gray-600 dark:text-gray-300' }} relative">
-              <span class="text-lg">🔔</span>
+              <span class="text-lg"></span>
               @if($has)
                 <span class="absolute -top-1 -right-1 bg-red-600 text-white text-[11px] leading-none rounded-full px-1.5 min-w-[18px] text-center ring-2 ring-white dark:ring-gray-800">{{ $count }}</span>
               @else
