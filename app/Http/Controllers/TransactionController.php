@@ -11,9 +11,10 @@ use App\Models\PaymentMethod;
 use Illuminate\Support\Str;
 use App\Models\User;
 use Carbon\Carbon;
+
 class TransactionController extends Controller
 {
-   public function __construct()
+    public function __construct()
     {
         // Lihat POS dan checkout
         $this->middleware('permission:transactions.lihat')->only([
@@ -30,6 +31,7 @@ class TransactionController extends Controller
         // Hapus transaksi
         $this->middleware('permission:transactions.hapus')->only(['destroy']);
     }
+
     // Tampilkan halaman POS
     public function pos()
     {
@@ -40,48 +42,78 @@ class TransactionController extends Controller
 
     public function index()
     {
-        $transactions = Transaction::with(['paymentMethod', 'user'])->orderBy('created_at', 'desc')->paginate(10);
+        $transactions = Transaction::with(['paymentMethod', 'user'])
+            ->orderBy('created_at', 'desc')
+            ->paginate(10);
+
         return view('transactions.index', compact('transactions'));
     }
 
-    // Tambah ke cart (pakai barcode atau id)
+    // =========================
+    //  Tambah ke cart (id/barcode)  -- VALIDASI STOK
+    // =========================
     public function addToCart(Request $request)
-{
-    $id = $request->input('id'); // id_Produk dari form
-    $product = Product::where('id_Produk', $id)
-                ->orWhere('barcode', $id)
-                ->first();
+    {
+        $id = $request->input('id'); // id_Produk dari form
+        $product = Product::where('id_Produk', $id)
+            ->orWhere('barcode', $id)
+            ->first();
 
-    if (!$product) {
-        return back()->with('error', 'Produk tidak ditemukan');
+        if (!$product) {
+            return back()->with('stock_error', 'Produk tidak ditemukan.');
+        }
+
+        $cart = session('cart', []);
+        $key  = $product->id_Produk;
+        $currentQty = isset($cart[$key]) ? (int) $cart[$key]['qty'] : 0;
+
+        // 1) Stok 0 -> tidak boleh ditambahkan
+        if ((int) $product->stock <= 0) {
+            return back()->with('stock_error', 'Stok habis untuk: ' . $product->name);
+        }
+
+        // 2) Melebihi stok -> blok
+        if ($currentQty + 1 > (int) $product->stock) {
+            return back()->with('stock_error', 'Stok tidak mencukupi untuk: ' . $product->name . '. Sisa stok: ' . $product->stock);
+        }
+
+        // 3) Aman -> tambahkan
+        $cart[$key] = [
+            'id'            => $product->id_Produk,
+            'name'          => $product->name,
+            'harga_sesudah' => $product->harga_sesudah,
+            'qty'           => $currentQty + 1,
+        ];
+
+        session(['cart' => $cart]);
+
+        return redirect()->route('pos.index')->with('success', $product->name . ' ditambahkan ke keranjang.');
     }
 
-    $cart = session('cart', []);
-    $key = $product->id_Produk;
-
-    $cart[$key] = [
-        'id' => $product->id_Produk,
-        'name' => $product->name,
-        'harga_sesudah' => $product->harga_sesudah,
-        'qty' => isset($cart[$key]) ? $cart[$key]['qty'] + 1 : 1,
-    ];
-
-    session(['cart' => $cart]);
-    return redirect()->route('pos.index');
-}
-    // Update jumlah item
+    // Update jumlah item (tingkatkan/kurangi) — tambahkan proteksi stok saat increase
     public function updateQty(Request $request)
     {
-        $id = $request->input('id');
-        $action = $request->input('action');
-        $cart = session('cart', []);
+        $id     = $request->input('id');     // id_Produk
+        $action = $request->input('action'); // increase / decrease
+        $cart   = session('cart', []);
+
         if (isset($cart[$id])) {
             if ($action === 'increase') {
+                // Cek stok produk sebelum menambah
+                $product = Product::find($id);
+                if ($product) {
+                    $nextQty = (int) $cart[$id]['qty'] + 1;
+                    if ($nextQty > (int) $product->stock) {
+                        return redirect()->route('pos.index')
+                            ->with('stock_error', 'Stok tidak mencukupi untuk: ' . $product->name . '. Sisa stok: ' . $product->stock);
+                    }
+                }
                 $cart[$id]['qty']++;
             } elseif ($action === 'decrease' && $cart[$id]['qty'] > 1) {
                 $cart[$id]['qty']--;
             }
         }
+
         session(['cart' => $cart]);
         return redirect()->route('pos.index');
     }
@@ -98,180 +130,192 @@ class TransactionController extends Controller
         return redirect()->route('pos.index');
     }
 
-        // Checkout (dummy saja, untuk testing)
-   
-
+    // =========================
+    //  Scan / cari barcode -- VALIDASI STOK
+    // =========================
     public function cariBarcode(Request $request)
     {
         $barcode = $request->input('barcode');
-        $product = \App\Models\Product::where('barcode', $barcode)->first();
+        $product = Product::where('barcode', $barcode)->first();
 
-        if ($product) {
-            // Langsung add ke cart (logika sama dengan addToCart)
-            $cart = session('cart', []);
+        if (!$product) {
+            return redirect()->route('pos.index')->with('stock_error', 'Produk dengan barcode tersebut tidak ditemukan.');
+        }
 
-            // Konsisten key (pakai id_Produk atau id, sesuaikan di semua tempat)
-            $key = $product->id_Produk;
-            $cart = session('cart', []);
+        $cart = session('cart', []);
+        $key  = $product->id_Produk;
+        $currentQty = isset($cart[$key]) ? (int) $cart[$key]['qty'] : 0;
 
-            if (isset($cart[$key])) {
+        // Validasi stok
+        if ((int) $product->stock <= 0) {
+            return redirect()->route('pos.index')->with('stock_error', 'Stok habis untuk: ' . $product->name);
+        }
+        if ($currentQty + 1 > (int) $product->stock) {
+            return redirect()->route('pos.index')->with('stock_error', 'Stok tidak mencukupi untuk: ' . $product->name . '. Sisa stok: ' . $product->stock);
+        }
+
+        // Tambah ke cart
+        if (isset($cart[$key])) {
             $cart[$key]['qty']++;
         } else {
             $cart[$key] = [
-                'id' => $product->id_Produk, // <-- pakai id_Produk
-                'name' => $product->name,
+                'id'            => $product->id_Produk, // pakai id_Produk
+                'name'          => $product->name,
                 'harga_sesudah' => $product->harga_sesudah,
-                'qty' => 1,
+                'qty'           => 1,
             ];
         }
+
         session(['cart' => $cart]);
+
         return redirect()->route('pos.index')->with('success', 'Produk masuk keranjang: ' . $product->name);
-    } else {
-        return redirect()->route('pos.index')->with('error', 'Produk tidak ditemukan!');
     }
-    
-    }
+
     public function showCheckout()
     {
         $cart = session('cart', []);
         $paymentMethods = PaymentMethod::all();
         return view('pos.checkout', compact('cart', 'paymentMethods'));
     }
+
     public function checkout(Request $request)
-{
-    $cart = session('cart', []);
-    $bayar = $request->input('bayar');
-    $idPaymentMethod = $request->input('id_PaymentMethod');
-    $total = collect($cart)->sum(fn($item) => $item['qty'] * $item['harga_sesudah']);
+    {
+        $cart = session('cart', []);
+        $bayar = $request->input('bayar');
+        $idPaymentMethod = $request->input('id_PaymentMethod');
+        $total = collect($cart)->sum(fn($item) => $item['qty'] * $item['harga_sesudah']);
 
-    if ($bayar < $total) {
-        return back()->with('error', 'Jumlah bayar kurang dari total.');
+        if ($bayar < $total) {
+            return back()->with('error', 'Jumlah bayar kurang dari total.');
+        }
+
+        // Simpan transaksi
+        $trx = Transaction::create([
+            // 'id_Transaction'   => (string) Str::uuid(),
+            'id_PaymentMethod'  => $idPaymentMethod,
+            'total'             => $total,
+            'paid'              => $bayar,
+            'change'            => $bayar - $total,
+            'user_id'           => auth()->id(),
+        ]);
+
+        foreach ($cart as $item) {
+            TransactionItem::create([
+                'id_TransactionItem' => (string) Str::uuid(),
+                'id_Transaction'     => $trx->id_Transaction,
+                'id_Produk'          => $item['id'],
+                'nama_produk'        => $item['name'],
+                'quantity'           => $item['qty'],
+                'price'              => $item['harga_sesudah'],
+                'subtotal'           => $item['qty'] * $item['harga_sesudah'],
+            ]);
+
+            // Kurangi stok produk
+            $product = Product::find($item['id']);
+            if ($product) {
+                $product->stock = max(0, $product->stock - $item['qty']);
+                $product->save();
+            }
+        }
+
+        session()->forget('cart');
+
+        // Redirect ke struk
+        return redirect()->route('pos.struk', $trx->id_Transaction);
     }
 
-    // Simpan transaksi (contoh)
-    $trx = \App\Models\Transaction::create([
-        // 'id_Transaction'    => (string) Str::uuid(),
-        'id_PaymentMethod'  => $idPaymentMethod,
-        'total' => $total,
-        'paid' => $bayar,
-        'change' => $bayar - $total,
-        'user_id' => auth()->id(),
-    ]);
-   foreach ($cart as $item) {
-    \App\Models\TransactionItem::create([
-        'id_TransactionItem' => (string) Str::uuid(),
-        'id_Transaction'    => $trx->id_Transaction,
-        'id_Produk' => $item['id'],
-        'nama_produk' => $item['name'],
-        'quantity' => $item['qty'],
-        'price' => $item['harga_sesudah'],
-        'subtotal' => $item['qty'] * $item['harga_sesudah'],
-    ]);
-
-    // -- Tambahkan ini --
-    $product = \App\Models\Product::find($item['id']);
-    if ($product) {
-        $product->stock = max(0, $product->stock - $item['qty']);
-        $product->save();
-    }
-}
-
-
-    session()->forget('cart');
-    // **REDIRECT KE STRUK!**
-    return redirect()->route('pos.struk', $trx->id_Transaction);
-}
-
-public function struk($id)
-{
-    $trx = Transaction::with('items.product', 'user')->findOrFail($id);
-    return view('pos.struk', compact('trx'));
-}
-
-public function processPayment(Request $request)
-{
-    $cart = session('cart', []);
-    $total = array_sum(array_map(fn($i) => $i['qty'] * $i['harga_sesudah'], $cart));
-
-    $request->validate([
-        'amount_paid' => 'required|numeric|min:' . $total,
-    ]);
-
-    $change = $request->amount_paid - $total;
-
-    // Di sini simpan transaksi ke database jika mau
-    // Transaction::create(...);
-
-    session()->forget('cart');
-    return redirect()->route('pos.index')->with('success', 'Pembayaran berhasil! Kembalian: Rp ' . number_format($change, 0, ',', '.'));
-}
-public function simpanTransaksi(Request $request)
-{
-    $cart = session('cart', []);
-    if (empty($cart)) {
-        return redirect()->route('pos.index')->with('error', 'Keranjang kosong!');
+    public function struk($id)
+    {
+        $trx = Transaction::with('items.product', 'user')->findOrFail($id);
+        return view('pos.struk', compact('trx'));
     }
 
-    $total = collect($cart)->sum(function($i) {
-        return $i['qty'] * $i['harga_sesudah'];
-    });
-    $bayar = $request->input('bayar');
-    if ($bayar < $total) {
-        return back()->with('error', 'Uang pembayaran kurang!');
+    public function processPayment(Request $request)
+    {
+        $cart = session('cart', []);
+        $total = array_sum(array_map(fn($i) => $i['qty'] * $i['harga_sesudah'], $cart));
+
+        $request->validate([
+            'amount_paid' => 'required|numeric|min:' . $total,
+        ]);
+
+        $change = $request->amount_paid - $total;
+
+        // Simpan transaksi bila diperlukan
+        // Transaction::create(...);
+
+        session()->forget('cart');
+        return redirect()->route('pos.index')->with('success', 'Pembayaran berhasil! Kembalian: Rp ' . number_format($change, 0, ',', '.'));
     }
 
-    // Di sini simpan transaksi ke database (tambahkan sesuai strukturmu)
-    // ... Transaction::create([...])
-    // ... TransactionItem::create([...])
+    public function simpanTransaksi(Request $request)
+    {
+        $cart = session('cart', []);
+        if (empty($cart)) {
+            return redirect()->route('pos.index')->with('error', 'Keranjang kosong!');
+        }
 
-    // Setelah simpan, clear cart
-    session()->forget('cart');
-    return redirect()->route('pos.index')->with('success', 'Transaksi berhasil disimpan!');
-}
+        $total = collect($cart)->sum(function ($i) {
+            return $i['qty'] * $i['harga_sesudah'];
+        });
 
-public function destroy($id)
-{
-    $transaction = Transaction::findOrFail($id);
+        $bayar = $request->input('bayar');
+        if ($bayar < $total) {
+            return back()->with('error', 'Uang pembayaran kurang!');
+        }
 
-    // Jika ingin juga hapus detail transaksi (opsional, jika ada relasi)
-    // $transaction->items()->delete(); 
+        // Simpan transaksi manual di sini jika diperlukan
+        // ...
 
-    $transaction->delete();
+        session()->forget('cart');
+        return redirect()->route('pos.index')->with('success', 'Transaksi berhasil disimpan!');
+    }
 
-    return redirect()->route('transactions.index')->with('success', 'Transaksi berhasil dihapus!');
-}
-public function edit($id)
-{
-    $transaction = Transaction::findOrFail($id);
-    $users = User::all();
-    $paymentMethods = PaymentMethod::all();
+    public function destroy($id)
+    {
+        $transaction = Transaction::findOrFail($id);
 
-    return view('transactions.edit', compact('transaction', 'users', 'paymentMethods'));
-}
-public function update(Request $request, $id)
-{
-    $request->validate([
-        'id_PaymentMethod' => 'required|exists:payment_methods,id_PaymentMethod',
-        'total'   => 'required|numeric|min:0',
-        'paid'    => 'required|numeric|min:0',
-        'change'  => 'required|numeric|min:0',
-        'created_at' => 'required|date', // ← VALIDASI TANGGAL (edit saja)
-    ]);
+        // Jika ingin juga hapus detail transaksi (opsional, jika ada relasi)
+        // $transaction->items()->delete();
 
-    $transaction = \App\Models\Transaction::findOrFail($id);
+        $transaction->delete();
 
-    // field biasa
-    $transaction->id_PaymentMethod = $request->id_PaymentMethod;
-    $transaction->total  = $request->total;
-    $transaction->paid   = $request->paid;
-    $transaction->change = $request->change;
+        return redirect()->route('transactions.index')->with('success', 'Transaksi berhasil dihapus!');
+    }
 
-    // tanggal transaksi (pakai created_at)
-    $transaction->created_at = Carbon::parse($request->created_at);
+    public function edit($id)
+    {
+        $transaction   = Transaction::findOrFail($id);
+        $users         = User::all();
+        $paymentMethods= PaymentMethod::all();
 
-    $transaction->save();
+        return view('transactions.edit', compact('transaction', 'users', 'paymentMethods'));
+    }
 
-    return redirect()->route('transactions.index')
-        ->with('success', 'Transaksi & tanggal berhasil diperbarui!');
-}
+    public function update(Request $request, $id)
+    {
+        $request->validate([
+            'id_PaymentMethod' => 'required|exists:payment_methods,id_PaymentMethod',
+            'total'            => 'required|numeric|min:0',
+            'paid'             => 'required|numeric|min:0',
+            'change'           => 'required|numeric|min:0',
+            'created_at'       => 'required|date', // validasi tanggal (edit saja)
+        ]);
+
+        $transaction = Transaction::findOrFail($id);
+
+        // field biasa
+        $transaction->id_PaymentMethod = $request->id_PaymentMethod;
+        $transaction->total            = $request->total;
+        $transaction->paid             = $request->paid;
+        $transaction->change           = $request->change;
+
+        // tanggal transaksi (pakai created_at)
+        $transaction->created_at = Carbon::parse($request->created_at);
+
+        $transaction->save();
+
+        return redirect()->route('transactions.index')
+            ->with('success', 'Transaksi & tanggal berhasil diperbarui!');
+    }
 }
