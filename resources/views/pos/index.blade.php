@@ -18,12 +18,30 @@
             </form>
             <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-8" style="margin-top: 20px;">
                 @foreach ($products as $product)
-                    <div class="bg-white rounded-xl shadow p-4 flex flex-col items-center border hover:shadow-lg transition">
+                    <div class="bg-white rounded-xl shadow p-4 flex flex-col items-center border hover:shadow-lg transition relative">
+                        {{-- Pita peringatan stok --}}
+                        @if($product->stock <= 0)
+                            <span class="absolute top-2 left-2 text-[10px] uppercase bg-red-600 text-white px-2 py-0.5 rounded">
+                                Habis — masih bisa dijual
+                            </span>
+                        @elseif($product->stock < 15)
+                            <span class="absolute top-2 left-2 text-[10px] uppercase bg-yellow-500 text-white px-2 py-0.5 rounded">
+                                Stok rendah
+                            </span>
+                        @endif
+
                         <img src="{{ $product->image ? asset('storage/' . $product->image) : 'https://ui-avatars.com/api/?name=' . urlencode($product->name) }}"
                              class="w-20 h-20 object-cover rounded-lg mb-2 border shadow"
                              alt="{{ $product->name }}">
                         <div class="text-gray-800 font-bold text-base text-center mb-1">{{ $product->name }}</div>
-                        <div class="text-gray-500 text-xs mb-1">Stok: <b>{{ $product->stock }}</b></div>
+
+                        <div class="text-xs mb-1
+                            @if($product->stock <= 0) text-red-600
+                            @elseif($product->stock < 15) text-yellow-600
+                            @else text-gray-500 @endif">
+                            Stok: <b>{{ $product->stock }}</b>
+                        </div>
+
                         <div class="text-orange-600 font-bold text-lg mb-2">Rp {{ number_format($product->harga_sesudah, 0, ',', '.') }}</div>
                         <form action="{{ route('pos.add') }}" method="POST" class="w-full">
                             @csrf
@@ -44,7 +62,6 @@
                 @if (count($cart) > 0)
                 <ul>
                     @foreach ($cart as $item)
-                        {{-- debug --}}
                         <li class="flex justify-between items-center mb-3 border-b border-gray-200 pb-2">
                             <div>
                                 <div class="text-gray-800 font-medium">
@@ -88,17 +105,6 @@
                         Proses Pembayaran
                     </button>
                 </form>
-
-                <!-- <script>
-                const input = document.getElementById('scan-barcode');
-                const form  = document.getElementById('form-scan');
-                input.addEventListener('keydown', (e) => {
-                if (e.key === 'Enter' || e.key === 'Tab') {
-                    e.preventDefault();
-                    if (input.value.trim() !== '') form.submit();
-                }
-                });
-                </script> -->
             </div>
         </div>
     </div>

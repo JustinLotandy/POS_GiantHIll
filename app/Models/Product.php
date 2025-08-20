@@ -28,4 +28,13 @@ class Product extends Model
     {
         return $this->belongsTo(Category::class, 'category_id', 'id_kategori');
     }
+     public function getIsLowStockAttribute(): bool
+    {
+        return $this->stock < 15; // ambang notifikasi
+    }
+
+    public function getIsOutOfStockAttribute(): bool
+    {
+        return $this->stock <= 0;
+    }
 }
