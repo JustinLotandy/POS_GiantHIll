@@ -1,8 +1,10 @@
-{{-- Pastikan Alpine sudah ada di proyekmu --}}
+{{-- ====== Alpine & helper ====== --}}
+{{-- Jika Alpine belum diload di layout utama, baris di bawah akan meload dari CDN --}}
+<script src="https://unpkg.com/alpinejs" defer></script>
 <style>[x-cloak]{display:none !important}</style>
 <script>
   document.addEventListener('alpine:init', () => {
-    // store global untuk kontrol dropdown notif
+    // Store global untuk kontrol notifikasi
     Alpine.store('notif', { open: false });
   });
 </script>
@@ -78,7 +80,7 @@
             </div>
 
             <div class="flex items-center">
-                {{-- ===== Notifikasi stok rendah: bell berwarna + teleport + backdrop ===== --}}
+                {{-- ===== Notifikasi stok rendah: bell + badge + dropdown teleport + backdrop ===== --}}
                 @php
                     $alertCount = $lowStockCount ?? 0;
                     $hasAlert   = $alertCount > 0;
@@ -107,7 +109,7 @@
 
                     {{-- Teleport ke body: backdrop + dropdown --}}
                     <template x-teleport="body">
-                        {{-- Backdrop transparan: klik di mana saja untuk menutup --}}
+                        {{-- Backdrop: klik di mana saja untuk menutup --}}
                         <div
                             x-cloak
                             x-show="$store.notif.open"
