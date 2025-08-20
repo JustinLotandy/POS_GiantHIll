@@ -1,30 +1,11 @@
-{{-- resources/views/dashboard.blade.php --}}
-@php
-    // Ambil data low-stock langsung di view agar langsung berfungsi
-    try {
-        $lowStocks = \App\Models\Product::where('stock', '<', 15)
-            ->orderBy('stock', 'asc')
-            ->limit(10)
-            ->get(['id_Produk', 'name', 'stock']);
-        $lowStockCount = $lowStocks->count();
-    } catch (\Throwable $e) {
-        $lowStocks = collect([]);
-        $lowStockCount = 0;
-    }
-@endphp
-
-{{-- Alpine.js untuk animasi & timer toast (aman bila sudah dimuat—baris ini tetap boleh ada) --}}
-<script src="https://unpkg.com/alpinejs" defer></script>
-<style>[x-cloak]{ display:none !important; }</style>
-
 <x-app-layout>
+    @include('partials.lowstock-toast')
     <x-slot name="header">
         <h2 class="font-semibold text-2xl text-gray-800 leading-tight">Dashboard </h2>
     </x-slot>
-
-    <div class="py-6 px-4 md:px-10">
-        {{-- Fitur utama POS --}}
-        <div class="grid grid-cols-2 md:grid-cols-5 gap-6 mb-8">
+        <div class="py-6 px-4 md:px-10">
+                {{-- Fitur utama POS --}}
+                <div class="grid grid-cols-2 md:grid-cols-5 gap-6 mb-8">
             <a href="{{ route('pos.index') }}" class="bg-gradient-to-br from-blue-500 to-blue-700 text-white rounded-2xl p-6 shadow flex flex-col items-center hover:scale-105 transition hover:ring-4 ring-blue-300 focus:outline-none">
                 <svg class="w-8 h-8 mb-2" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M3 3h18v4H3V3zm0 6h18v13H3V9z" /></svg>
                 <span class="font-bold">Point of Sales</span>
@@ -51,7 +32,6 @@
                 <span class="text-xs">Pengaturan Payment</span>
             </a>
         </div>
-
         {{-- Ringkasan --}}
         <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-10">
             <div class="bg-white rounded-xl shadow p-6 text-center hover:ring-2 ring-blue-400 transition">
@@ -101,7 +81,6 @@
             </table>
         </div>
     </div>
-
     {{-- Chart.js --}}
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>
@@ -123,17 +102,20 @@
             },
             options: {
                 responsive: true,
-                plugins: { legend: { display: false }},
+                plugins: {
+                    legend: { display: false }
+                },
                 scales: {
                     y: {
                         beginAtZero: true,
-                        ticks: { callback: v => 'Rp ' + v.toLocaleString('id-ID') }
+                        ticks: {
+                            callback: function(value) {
+                                return 'Rp ' + value.toLocaleString('id-ID');
+                            }
+                        }
                     }
                 }
             }
         });
     </script>
-
-    {{-- TOAST LOW-STOCK: muncul 10 detik di kanan atas --}}
-    @include('partials.lowstock-toast', ['lowStocks' => $lowStocks, 'lowStockCount' => $lowStockCount])
 </x-app-layout>
