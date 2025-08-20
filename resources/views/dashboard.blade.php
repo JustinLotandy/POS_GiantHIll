@@ -1,22 +1,21 @@
 {{-- resources/views/dashboard.blade.php --}}
 @php
-    // Ambil data low-stock langsung di view supaya langsung jalan
+    // Ambil data low stock langsung di view agar langsung berfungsi
     try {
-        $lowStocks = \App\Models\Product::orderBy('stock', 'asc')
-            ->limit(10)
+        $lowStocks = \App\Models\Product::where('stock', '<', 15)
+            ->orderBy('stock', 'asc')
+            ->limit(50)
             ->get(['id_Produk', 'name', 'stock']);
-        $lowStockUnder15 = $lowStocks->where('stock', '<', 15);
-        $lowStockCount   = $lowStockUnder15->count();
+        $lowStockCount = $lowStocks->count();
     } catch (\Throwable $e) {
         $lowStocks = collect([]);
-        $lowStockUnder15 = collect([]);
         $lowStockCount = 0;
     }
 @endphp
 
 <x-app-layout>
     <x-slot name="header">
-        <h2 class="font-semibold text-2xl text-gray-800 leading-tight">Dashboard</h2>
+        <h2 class="font-semibold text-2xl text-gray-800 leading-tight">Dashboard </h2>
     </x-slot>
 
     <div class="py-6 px-4 md:px-10">
@@ -133,71 +132,92 @@
         })();
     </script>
 
-    {{-- ===== TOAST LOW STOCK: pure JS, muncul 10 detik ===== --}}
-    <div id="lowstock-toast"
-         class="fixed top-16 right-5 z-[1000] w-96 max-w-[95vw] bg-white border border-gray-200 rounded-xl shadow-lg overflow-hidden hidden">
-        <div class="px-4 py-3 border-b border-gray-100 flex items-center justify-between">
-            <div class="font-semibold text-gray-800">Notifikasi Stok Rendah</div>
-            <button id="lowstock-close" class="text-gray-500 hover:text-gray-700" title="Tutup">✕</button>
-        </div>
-        <div class="px-4 py-3">
-            @if($lowStockCount > 0)
-                <div class="text-sm text-gray-700 mb-2">
-                    {{ $lowStockCount }} produk stok &lt; 15. Beberapa di antaranya:
+    {{-- ==================== POPUP LOW STOCK (TANPA TIMER) ==================== --}}
+    @if($lowStockCount > 0)
+    <div id="lowstock-overlay"
+         class="fixed inset-0 z-[1000] flex items-center justify-center bg-black/40">
+        <!-- Card -->
+        <div class="relative w-[92vw] max-w-xl bg-white dark:bg-gray-800 rounded-2xl shadow-2xl border border-gray-200 dark:border-gray-700">
+            <!-- Header -->
+            <div class="px-5 py-3 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
+                <div class="font-semibold text-gray-800 dark:text-gray-100">
+                    ⚠️ Stok Kurang dari 15
                 </div>
-                <ul class="text-sm text-gray-700 space-y-1 max-h-44 overflow-auto">
-                    @foreach($lowStockUnder15 as $p)
-                        <li class="flex justify-between">
-                            <span>{{ $p->name }}</span>
-                            <span class="ml-2 text-xs px-2 py-0.5 rounded-full
-                                @if($p->stock <= 0) bg-red-600 text-white
-                                @elseif($p->stock < 5) bg-red-100 text-red-700
-                                @else bg-yellow-100 text-yellow-700 @endif">
-                                Stok: {{ $p->stock }}
-                            </span>
-                        </li>
-                    @endforeach
-                </ul>
-            @else
-                <div class="text-sm text-gray-700">
-                    Semua aman 🎉 — tidak ada stok &lt; 15.
-                </div>
-            @endif
+                <button id="lowstock-btn-close"
+                        class="rounded-md px-3 py-1.5 text-sm bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200">
+                    Tutup
+                </button>
+            </div>
 
-            <div class="mt-3 text-[11px] text-gray-500">
-                Notifikasi ini akan tertutup otomatis dalam 10 detik.
+            <!-- Body -->
+            <div class="px-5 py-4">
+                <p class="text-sm text-gray-600 dark:text-gray-300 mb-3">
+                    Berikut daftar produk dengan stok rendah. Segera restock agar transaksi lancar.
+                </p>
+
+                <div class="max-h-72 overflow-y-auto">
+                    <table class="w-full text-sm">
+                        <thead class="sticky top-0 bg-white dark:bg-gray-800">
+                            <tr class="text-gray-500">
+                                <th class="text-left py-2 pr-2">Produk</th>
+                                <th class="text-left py-2 pr-2">Stok</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-100 dark:divide-gray-700">
+                            @foreach($lowStocks as $p)
+                                <tr>
+                                    <td class="py-2 pr-2 text-gray-800 dark:text-gray-100">{{ $p->name }}</td>
+                                    <td class="py-2 pr-2">
+                                        <span class="text-xs px-2 py-0.5 rounded-full
+                                            @if($p->stock <= 0) bg-red-600 text-white
+                                            @elseif($p->stock < 5) bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300
+                                            @else bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-300 @endif">
+                                            {{ $p->stock }}
+                                        </span>
+                                    </td>
+                                </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="mt-4 text-[11px] text-gray-500 dark:text-gray-400">
+                    *Tutup pop up ini untuk melanjutkan penggunaan dashboard.
+                </div>
             </div>
         </div>
+
+        <!-- Backdrop click area (agar bisa tutup dengan klik di luar card) -->
+        <button id="lowstock-backdrop" class="absolute inset-0" aria-label="Close low stock popup"></button>
     </div>
+    @endif
 
     <script>
         (function () {
-            const toast = document.getElementById('lowstock-toast');
-            const closeBtn = document.getElementById('lowstock-close');
+            const overlay  = document.getElementById('lowstock-overlay');
+            if (!overlay) return; // tidak ada low stock, tidak render popup
 
-            // Tampilkan (pastikan terlihat meski Tailwind belum load penuh)
-            toast.classList.remove('hidden');
-            toast.style.opacity = '0';
-            toast.style.transform = 'translateY(-8px)';
-            toast.style.transition = 'opacity .25s ease, transform .25s ease';
+            const btnClose = document.getElementById('lowstock-btn-close');
+            const backdrop = document.getElementById('lowstock-backdrop');
 
-            requestAnimationFrame(() => {
-                toast.style.opacity = '1';
-                toast.style.transform = 'translateY(0)';
-            });
-
-            // Auto close 10 detik
-            const timer = setTimeout(hide, 10000);
-
-            // Close manual
-            closeBtn.addEventListener('click', hide);
-
-            function hide() {
-                clearTimeout(timer);
-                toast.style.opacity = '0';
-                toast.style.transform = 'translateY(-8px)';
-                setTimeout(() => { toast.remove(); }, 250);
+            function closePopup() {
+                // animasi simple (optional)
+                overlay.style.opacity = '1';
+                overlay.style.transition = 'opacity .2s ease';
+                requestAnimationFrame(() => {
+                    overlay.style.opacity = '0';
+                    setTimeout(() => overlay.remove(), 200);
+                });
             }
+
+            btnClose.addEventListener('click', closePopup);
+            backdrop.addEventListener('click', closePopup);
+
+            // ESC untuk tutup
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape') closePopup();
+            });
         })();
     </script>
+    {{-- ==================== /POPUP LOW STOCK ==================== --}}
 </x-app-layout>
