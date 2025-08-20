@@ -15,8 +15,8 @@ class AppServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
-        // Inject data stok rendah ke navbar
-        View::composer('layouts.navigation', function ($view) {
+        // Notifikasi stok untuk navbar & toast
+        View::composer(['layouts.navigation', 'partials.lowstock-toast'], function ($view) {
             $lowStockQuery = Product::where('stock', '<', 15)->orderBy('stock', 'asc');
 
             $lowStockCount = (clone $lowStockQuery)->count();

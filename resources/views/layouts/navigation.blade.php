@@ -1,13 +1,6 @@
-{{-- ====== Alpine & helper ====== --}}
-{{-- Jika Alpine belum diload di layout utama, baris di bawah akan meload dari CDN --}}
+{{-- Alpine (pakai CDN jika belum dimuat di layout utama) --}}
 <script src="https://unpkg.com/alpinejs" defer></script>
 <style>[x-cloak]{display:none !important}</style>
-<script>
-  document.addEventListener('alpine:init', () => {
-    // Store global untuk kontrol notifikasi
-    Alpine.store('notif', { open: false });
-  });
-</script>
 
 <nav x-data="{ open: false }" class="bg-white dark:bg-gray-800 border-b border-gray-100 dark:border-gray-700">
     <!-- Primary Navigation Menu -->
@@ -28,49 +21,41 @@
                             {{ __('Dashboard') }}
                         </x-nav-link>
                     @endcan
-
                     @can('pos.transaksi')
                         <x-nav-link :href="route('pos.index')" :active="request()->routeIs('pos.*')">
                             {{ __('POS') }}
                         </x-nav-link>
                     @endcan
-
                     @can('products.lihat')
                         <x-nav-link :href="route('products.index')" :active="request()->routeIs('products.*')">
                             {{ __('Produk') }}
                         </x-nav-link>
                     @endcan
-
                     @can('categories.lihat')
                         <x-nav-link :href="route('categories.index')" :active="request()->routeIs('categories.*')">
                             {{ __('Kategori') }}
                         </x-nav-link>
                     @endcan
-
                     @can('payment_methods.lihat')
                         <x-nav-link :href="route('payment_methods.index')" :active="request()->routeIs('payment_methods.*')">
                             {{ __('Payment Method') }}
                         </x-nav-link>
                     @endcan
-
                     @can('transactions.lihat')
                         <x-nav-link :href="route('transactions.index')" :active="request()->routeIs('transactions.*')">
                             {{ __('Daftar Transaksi') }}
                         </x-nav-link>
                     @endcan
-
                     @can('users.lihat')
                         <x-nav-link :href="route('users.index')" :active="request()->routeIs('users.*')">
                             {{ __('Pengguna') }}
                         </x-nav-link>
                     @endcan
-
                     @canany(['laporan.harian', 'laporan.mingguan', 'laporan.bulanan'])
                         <x-nav-link :href="route('laporan.index')" :active="request()->routeIs('laporan.*')">
                             {{ __('Laporan') }}
                         </x-nav-link>
                     @endcanany
-
                     @can('roles.lihat')
                         <x-nav-link :href="route('roles.index')" :active="request()->routeIs('roles.*')">
                             {{ __('Roles') }}
@@ -80,20 +65,22 @@
             </div>
 
             <div class="flex items-center">
-                {{-- ===== Notifikasi stok rendah: bell + badge + dropdown teleport + backdrop ===== --}}
+                {{-- ===== Notifikasi stok rendah: hover untuk melihat ===== --}}
                 @php
                     $alertCount = $lowStockCount ?? 0;
                     $hasAlert   = $alertCount > 0;
                 @endphp
 
-                <div class="hidden sm:flex sm:items-center sm:ms-6 relative">
+                <div
+                    x-data="{ openNotif:false }"
+                    class="hidden sm:flex sm:items-center sm:ms-6 relative"
+                    @mouseleave="openNotif=false"
+                >
                     <button
                         type="button"
-                        data-bell
-                        @click.stop="$store.notif.open = !$store.notif.open; window.dispatchEvent(new CustomEvent('posisi-notif'))"
-                        class="relative inline-flex items-center px-3 py-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 focus:outline-none select-none"
+                        @mouseenter="openNotif=true"
+                        class="relative inline-flex items-center px-3 py-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 focus:outline-none"
                         aria-label="Notifikasi stok rendah"
-                        :aria-expanded="$store.notif.open"
                     >
                         <span class="{{ $hasAlert ? 'text-red-600' : 'text-gray-600 dark:text-gray-300' }} relative">
                             <span class="text-lg">🔔</span>
@@ -107,79 +94,45 @@
                         </span>
                     </button>
 
-                    {{-- Teleport ke body: backdrop + dropdown --}}
-                    <template x-teleport="body">
-                        {{-- Backdrop: klik di mana saja untuk menutup --}}
-                        <div
-                            x-cloak
-                            x-show="$store.notif.open"
-                            x-transition.opacity
-                            class="fixed inset-0 z-[99998] bg-transparent"
-                            @click="$store.notif.open=false"
-                        ></div>
-
-                        {{-- Dropdown tepat di bawah badge (posisi fixed dari tombol bell) --}}
-                        <div
-                            x-cloak
-                            x-data="{ left:0, top:0 }"
-                            x-show="$store.notif.open"
-                            x-transition.opacity
-                            @keydown.escape.window="$store.notif.open=false"
-                            @posisi-notif.window="
-                                const btn = document.querySelector('[data-bell]');
-                                if (!btn) return;
-                                const r = btn.getBoundingClientRect();
-                                left = r.right - 320;  // 320px = w-80
-                                top  = r.bottom + 8;   // jarak vertikal
-                                if (left < 8) left = 8;
-                            "
-                            x-init="
-                                $nextTick(() => window.dispatchEvent(new CustomEvent('posisi-notif')));
-                                const place = () => window.dispatchEvent(new CustomEvent('posisi-notif'));
-                                window.addEventListener('resize', place);
-                                window.addEventListener('scroll', place, true);
-                            "
-                            :style="`position:fixed; z-index:99999; left:${left}px; top:${top}px;`"
-                            class="w-80 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 p-3"
-                            role="dialog"
-                            aria-label="Daftar notifikasi stok"
-                            @click.stop
-                        >
-                            <div class="flex items-center justify-between mb-2">
-                                <div class="text-sm font-semibold text-gray-800 dark:text-gray-200">
-                                    Stok Rendah (&lt; 15)
-                                </div>
-                                <button
-                                    type="button"
-                                    class="text-xs px-2 py-1 rounded border hover:bg-gray-50 dark:hover:bg-gray-700"
-                                    @click="$store.notif.open=false"
-                                >Tutup</button>
+                    {{-- Dropdown (muncul di bawah tombol saat hover) --}}
+                    <div
+                        x-cloak
+                        x-show="openNotif"
+                        x-transition.opacity
+                        @mouseenter="openNotif=true"
+                        @mouseleave="openNotif=false"
+                        class="absolute right-0 mt-2 w-80 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 p-3 z-50"
+                    >
+                        <div class="flex items-center justify-between mb-2">
+                            <div class="text-sm font-semibold text-gray-800 dark:text-gray-200">
+                                Stok Rendah (&lt; 15)
                             </div>
-
-                            @if(($lowStockCount ?? 0) === 0)
-                                <div class="text-sm text-gray-500 dark:text-gray-400">Semua aman 🎉</div>
-                            @else
-                                <ul class="max-h-64 overflow-auto divide-y divide-gray-100 dark:divide-gray-700">
-                                    @foreach(($lowStocks ?? []) as $p)
-                                        <li class="py-2 flex items-center justify-between">
-                                            <div class="text-sm text-gray-700 dark:text-gray-300">
-                                                {{ is_object($p) ? $p->name : '-' }}
-                                            </div>
-                                            <span class="text-xs px-2 py-0.5 rounded-full
-                                                @if(is_object($p) && $p->stock <= 0) bg-red-600 text-white
-                                                @elseif(is_object($p) && $p->stock < 5) bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300
-                                                @else bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-300 @endif">
-                                                Stok: {{ is_object($p) ? $p->stock : '-' }}
-                                            </span>
-                                        </li>
-                                    @endforeach
-                                </ul>
-                                <div class="mt-2 text-[11px] text-gray-500 dark:text-gray-400">
-                                    Menampilkan hingga 10 produk stok terendah.
-                                </div>
-                            @endif
+                            <span class="text-xs text-gray-500">Hover untuk melihat</span>
                         </div>
-                    </template>
+
+                        @if(($lowStockCount ?? 0) === 0)
+                            <div class="text-sm text-gray-500 dark:text-gray-400">Semua aman 🎉</div>
+                        @else
+                            <ul class="max-h-64 overflow-auto divide-y divide-gray-100 dark:divide-gray-700">
+                                @foreach(($lowStocks ?? []) as $p)
+                                    <li class="py-2 flex items-center justify-between">
+                                        <div class="text-sm text-gray-700 dark:text-gray-300">
+                                            {{ is_object($p) ? $p->name : '-' }}
+                                        </div>
+                                        <span class="text-xs px-2 py-0.5 rounded-full
+                                            @if(is_object($p) && $p->stock <= 0) bg-red-600 text-white
+                                            @elseif(is_object($p) && $p->stock < 5) bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300
+                                            @else bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-300 @endif">
+                                            Stok: {{ is_object($p) ? $p->stock : '-' }}
+                                        </span>
+                                    </li>
+                                @endforeach
+                            </ul>
+                            <div class="mt-2 text-[11px] text-gray-500 dark:text-gray-400">
+                                Menampilkan hingga 10 produk stok terendah.
+                            </div>
+                        @endif
+                    </div>
                 </div>
 
                 {{-- ===== Settings Dropdown: hanya saat login ===== --}}
