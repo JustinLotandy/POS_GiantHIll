@@ -69,54 +69,48 @@
             </div>
 
             <div class="flex items-center">
-                {{-- ===== Notifikasi stok rendah: teleport + anchor tepat di bawah badge ===== --}}
+                {{-- ===== Notifikasi stok rendah: teleport + Alpine store global ===== --}}
                 @php
                     $alertCount = $lowStockCount ?? 0;
                     $hasAlert   = $alertCount > 0;
                 @endphp
 
-                <div class="hidden sm:flex sm:items-center sm:ms-6 relative" x-data="{ openNotif:false }">
+                <div class="hidden sm:flex sm:items-center sm:ms-6 relative">
                     <button
                         data-bell
-                        @click="openNotif = !openNotif; window.dispatchEvent(new CustomEvent('posisi-notif'))"
+                        @click="$store.notif.open = !$store.notif.open; window.dispatchEvent(new CustomEvent('posisi-notif'))"
                         class="relative inline-flex items-center px-3 py-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 focus:outline-none select-none"
                         aria-label="Notifikasi stok rendah"
-                        aria-haspopup="true"
-                        :aria-expanded="openNotif"
+                        :aria-expanded="$store.notif.open"
                     >
                         <span class="{{ $hasAlert ? 'text-red-600' : 'text-gray-600 dark:text-gray-300' }} relative">
                             <span class="text-lg">🔔</span>
-
-                            {{-- Badge: merah (angka) saat ada alert; titik abu-abu saat tidak ada --}}
                             @if($hasAlert)
-                                <span
-                                    class="absolute -top-1 -right-1 bg-red-600 text-white text-[11px] leading-none rounded-full px-1.5 min-w-[18px] text-center ring-2 ring-white dark:ring-gray-800">
+                                <span class="absolute -top-1 -right-1 bg-red-600 text-white text-[11px] leading-none rounded-full px-1.5 min-w-[18px] text-center ring-2 ring-white dark:ring-gray-800">
                                     {{ $alertCount }}
                                 </span>
                             @else
-                                <span
-                                    class="absolute -top-0.5 -right-0.5 w-2 h-2 bg-gray-300 rounded-full ring-2 ring-white dark:ring-gray-800">
-                                </span>
+                                <span class="absolute -top-0.5 -right-0.5 w-2 h-2 bg-gray-300 rounded-full ring-2 ring-white dark:ring-gray-800"></span>
                             @endif
                         </span>
                     </button>
 
-                    {{-- === Dropdown diteleport ke <body> agar tidak ketutup/ter-clip === --}}
+                    {{-- Teleport dropdown ke <body> supaya nggak ketutup/clip --}}
                     <template x-teleport="body">
                         <div
                             x-cloak
                             x-data="{ left:0, top:0 }"
-                            x-show="$root.openNotif"
+                            x-show="$store.notif.open"
                             x-transition.opacity
-                            @click.outside="$root.openNotif=false"
-                            @keydown.escape.window="$root.openNotif=false"
+                            @click.outside="$store.notif.open=false"
+                            @keydown.escape.window="$store.notif.open=false"
                             @posisi-notif.window="
                                 const btn = document.querySelector('[data-bell]');
                                 if (!btn) return;
                                 const r = btn.getBoundingClientRect();
-                                left = r.right - 320;  // 320px = w-80
-                                top  = r.bottom + 8;   // jarak vertikal 8px
-                                if (left < 8) left = 8; // jaga tidak keluar kiri
+                                left = r.right - 320; // 320px = w-80
+                                top  = r.bottom + 8;  // jarak vertikal
+                                if (left < 8) left = 8;
                             "
                             x-init="
                                 $nextTick(() => window.dispatchEvent(new CustomEvent('posisi-notif')));
@@ -155,6 +149,12 @@
                                     Menampilkan hingga 10 produk stok terendah.
                                 </div>
                             @endif
+
+                            <div class="mt-3 text-right">
+                                <button @click="$store.notif.open=false" class="text-sm px-3 py-1 border rounded hover:bg-gray-50 dark:hover:bg-gray-700">
+                                    Tutup
+                                </button>
+                            </div>
                         </div>
                     </template>
                 </div>
