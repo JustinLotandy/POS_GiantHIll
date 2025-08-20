@@ -19,15 +19,17 @@
     @else
       <ul class="text-sm text-gray-700 dark:text-gray-300 space-y-1 max-h-44 overflow-auto">
         @foreach(($lowStocks ?? []) as $p)
-          <li class="flex justify-between">
-            <span>{{ $p->name }}</span>
-            <span class="ml-2 text-xs px-2 py-0.5 rounded-full
-              @if($p->stock <= 0) bg-red-600 text-white
-              @elseif($p->stock < 5) bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300
-              @else bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-300 @endif">
-              Stok: {{ $p->stock }}
-            </span>
-          </li>
+          @if(is_object($p))
+            <li class="flex justify-between">
+              <span>{{ $p->name }}</span>
+              <span class="ml-2 text-xs px-2 py-0.5 rounded-full
+                @if($p->stock <= 0) bg-red-600 text-white
+                @elseif($p->stock < 5) bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300
+                @else bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-300 @endif">
+                Stok: {{ $p->stock }}
+              </span>
+            </li>
+          @endif
         @endforeach
       </ul>
       <div class="mt-2 text-[11px] text-gray-500 dark:text-gray-400">
