@@ -1,3 +1,5 @@
+{{-- resources/views/laporan/_tabel.blade.php --}}
+
 {{-- Ringkasan --}}
 <div class="grid grid-cols-1 md:grid-cols-3 gap-3 p-4">
   <div class="rounded-xl border bg-white p-4">
@@ -34,24 +36,43 @@
       <th class="px-3 py-2">Tanggal</th>
     </tr>
   </thead>
+
   <tbody>
     @php($gTotal = 0)
     @php($gProfit = 0)
+
     @forelse($data as $row)
       @php($gTotal  += (int)($row->total ?? 0))
       @php($gProfit += (int)($row->total_profit ?? 0))
+
       <tr class="border-t align-top">
         <td class="px-3 py-2">{{ $row->id_Transaction }}</td>
         <td class="px-3 py-2">{{ $row->user->name ?? '-' }}</td>
         <td class="px-3 py-2 text-center">{{ $row->paymentMethod->name_payment ?? '-' }}</td>
-
         <td class="px-3 py-2">
-          {!! $row->products_label_html ?? '' !!} {{-- tampil ke bawah --}}
+          {!! $row->products_label_html ?? '' !!} {{-- tampil ke bawah dengan <br> --}}
         </td>
-
-        <td class="px-3 py-2 text-right">Rp {{ number_format($row->total_profit ?? 0,0,',','.') }}</td>
-        <td class="px-3 py-2 text-right">Rp {{ number_format($row->total,0,',','.') }}</td>
-        <td class="px-3 py-2 text-right">Rp {{ number_format($row->paid,0,',','.') }}</td>
-        <td class="px-3 py-2 text-right">Rp {{ number_format($row->change,0,',','.') }}</td>
+        <td class="px-3 py-2 text-right">Rp {{ number_format($row->total_profit ?? 0, 0, ',', '.') }}</td>
+        <td class="px-3 py-2 text-right">Rp {{ number_format($row->total ?? 0, 0, ',', '.') }}</td>
+        <td class="px-3 py-2 text-right">Rp {{ number_format($row->paid ?? 0, 0, ',', '.') }}</td>
+        <td class="px-3 py-2 text-right">Rp {{ number_format($row->change ?? 0, 0, ',', '.') }}</td>
         <td class="px-3 py-2">
-          {{
+          {{ optional($row->created_at)->timezone('Asia/Jakarta')->format('Y-m-d H:i:s') }}
+        </td>
+      </tr>
+    @empty
+      <tr>
+        <td colspan="9" class="px-3 py-6 text-center text-gray-500">Tidak ada data.</td>
+      </tr>
+    @endforelse
+  </tbody>
+
+  <tfoot>
+    <tr class="border-t font-semibold bg-gray-50">
+      <td colspan="4" class="px-3 py-2 text-right">Grand Total</td>
+      <td class="px-3 py-2 text-right">Rp {{ number_format($gProfit, 0, ',', '.') }}</td>
+      <td class="px-3 py-2 text-right">Rp {{ number_format($gTotal, 0, ',', '.') }}</td>
+      <td colspan="3"></td>
+    </tr>
+  </tfoot>
+</table>
