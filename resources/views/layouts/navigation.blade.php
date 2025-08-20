@@ -1,4 +1,4 @@
-{{-- Alpine (pakai CDN jika belum dimuat di layout utama) --}}
+{{-- Alpine (pakai CDN jika belum dimuat) --}}
 <script src="https://unpkg.com/alpinejs" defer></script>
 <style>[x-cloak]{display:none !important}</style>
 
@@ -14,74 +14,53 @@
                     </a>
                 </div>
 
-                <!-- Navigation Links -->
+                <!-- Nav Links -->
                 <div class="hidden space-x-8 sm:-my-px sm:ms-10 sm:flex">
                     @can('dashboard.lihat')
-                        <x-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')">
-                            {{ __('Dashboard') }}
-                        </x-nav-link>
+                        <x-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')">Dashboard</x-nav-link>
                     @endcan
                     @can('pos.transaksi')
-                        <x-nav-link :href="route('pos.index')" :active="request()->routeIs('pos.*')">
-                            {{ __('POS') }}
-                        </x-nav-link>
+                        <x-nav-link :href="route('pos.index')" :active="request()->routeIs('pos.*')">POS</x-nav-link>
                     @endcan
                     @can('products.lihat')
-                        <x-nav-link :href="route('products.index')" :active="request()->routeIs('products.*')">
-                            {{ __('Produk') }}
-                        </x-nav-link>
+                        <x-nav-link :href="route('products.index')" :active="request()->routeIs('products.*')">Produk</x-nav-link>
                     @endcan
                     @can('categories.lihat')
-                        <x-nav-link :href="route('categories.index')" :active="request()->routeIs('categories.*')">
-                            {{ __('Kategori') }}
-                        </x-nav-link>
+                        <x-nav-link :href="route('categories.index')" :active="request()->routeIs('categories.*')">Kategori</x-nav-link>
                     @endcan
                     @can('payment_methods.lihat')
-                        <x-nav-link :href="route('payment_methods.index')" :active="request()->routeIs('payment_methods.*')">
-                            {{ __('Payment Method') }}
-                        </x-nav-link>
+                        <x-nav-link :href="route('payment_methods.index')" :active="request()->routeIs('payment_methods.*')">Payment Method</x-nav-link>
                     @endcan
                     @can('transactions.lihat')
-                        <x-nav-link :href="route('transactions.index')" :active="request()->routeIs('transactions.*')">
-                            {{ __('Daftar Transaksi') }}
-                        </x-nav-link>
+                        <x-nav-link :href="route('transactions.index')" :active="request()->routeIs('transactions.*')">Daftar Transaksi</x-nav-link>
                     @endcan
                     @can('users.lihat')
-                        <x-nav-link :href="route('users.index')" :active="request()->routeIs('users.*')">
-                            {{ __('Pengguna') }}
-                        </x-nav-link>
+                        <x-nav-link :href="route('users.index')" :active="request()->routeIs('users.*')">Pengguna</x-nav-link>
                     @endcan
                     @canany(['laporan.harian', 'laporan.mingguan', 'laporan.bulanan'])
-                        <x-nav-link :href="route('laporan.index')" :active="request()->routeIs('laporan.*')">
-                            {{ __('Laporan') }}
-                        </x-nav-link>
+                        <x-nav-link :href="route('laporan.index')" :active="request()->routeIs('laporan.*')">Laporan</x-nav-link>
                     @endcanany
                     @can('roles.lihat')
-                        <x-nav-link :href="route('roles.index')" :active="request()->routeIs('roles.*')">
-                            {{ __('Roles') }}
-                        </x-nav-link>
+                        <x-nav-link :href="route('roles.index')" :active="request()->routeIs('roles.*')">Roles</x-nav-link>
                     @endcan
                 </div>
             </div>
 
             <div class="flex items-center">
-                {{-- ===== Notifikasi stok rendah: hover untuk melihat ===== --}}
+                {{-- ===== Notifikasi stok rendah (hover) ===== --}}
                 @php
                     $alertCount = $lowStockCount ?? 0;
                     $hasAlert   = $alertCount > 0;
                 @endphp
 
-                <div
-                    x-data="{ openNotif:false }"
-                    class="hidden sm:flex sm:items-center sm:ms-6 relative"
-                    @mouseleave="openNotif=false"
-                >
-                    <button
-                        type="button"
-                        @mouseenter="openNotif=true"
-                        class="relative inline-flex items-center px-3 py-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 focus:outline-none"
-                        aria-label="Notifikasi stok rendah"
-                    >
+                <div x-data="{ openNotif:false }"
+                     class="hidden sm:flex sm:items-center sm:ms-6 relative"
+                     @mouseleave="openNotif=false">
+
+                    <button type="button"
+                            @mouseenter="openNotif=true"
+                            class="relative inline-flex items-center px-3 py-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 focus:outline-none"
+                            aria-label="Notifikasi stok rendah">
                         <span class="{{ $hasAlert ? 'text-red-600' : 'text-gray-600 dark:text-gray-300' }} relative">
                             <span class="text-lg">🔔</span>
                             @if($hasAlert)
@@ -94,15 +73,13 @@
                         </span>
                     </button>
 
-                    {{-- Dropdown (muncul di bawah tombol saat hover) --}}
-                    <div
-                        x-cloak
-                        x-show="openNotif"
-                        x-transition.opacity
-                        @mouseenter="openNotif=true"
-                        @mouseleave="openNotif=false"
-                        class="absolute right-0 mt-2 w-80 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 p-3 z-50"
-                    >
+                    {{-- Dropdown: selalu DI BAWAH ikon --}}
+                    <div x-cloak
+                         x-show="openNotif"
+                         x-transition.origin.top.right
+                         @mouseenter="openNotif=true"
+                         @mouseleave="openNotif=false"
+                         class="absolute right-0 mt-3 w-80 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 p-3 z-50">
                         <div class="flex items-center justify-between mb-2">
                             <div class="text-sm font-semibold text-gray-800 dark:text-gray-200">
                                 Stok Rendah (&lt; 15)
@@ -135,12 +112,12 @@
                     </div>
                 </div>
 
-                {{-- ===== Settings Dropdown: hanya saat login ===== --}}
+                {{-- ===== Settings Dropdown (login saja) ===== --}}
                 @auth
                 <div class="hidden sm:flex sm:items-center sm:ms-6">
                     <x-dropdown align="right" width="48">
                         <x-slot name="trigger">
-                            <button class="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-gray-500 dark:text-gray-400 bg-white dark:bg-gray-800 hover:text-gray-700 dark:hover:text-gray-300 focus:outline-none transition ease-in-out duration-150">
+                            <button class="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-gray-500 dark:text-gray-400 bg-white dark:bg-gray-800 hover:text-gray-700 dark:hover:text-gray-300 focus:outline-none transition">
                                 <div>{{ Auth::user()->name }}</div>
                                 <div class="ms-1">
                                     <svg class="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
@@ -151,15 +128,12 @@
                         </x-slot>
 
                         <x-slot name="content">
-                            <x-dropdown-link :href="route('profile.edit')">
-                                {{ __('Profile') }}
-                            </x-dropdown-link>
-
+                            <x-dropdown-link :href="route('profile.edit')">Profile</x-dropdown-link>
                             <form method="POST" action="{{ route('logout') }}">
                                 @csrf
                                 <x-dropdown-link :href="route('logout')"
-                                        onclick="event.preventDefault(); this.closest('form').submit();">
-                                    {{ __('Log Out') }}
+                                     onclick="event.preventDefault(); this.closest('form').submit();">
+                                     Log Out
                                 </x-dropdown-link>
                             </form>
                         </x-slot>
@@ -169,7 +143,7 @@
 
                 <!-- Hamburger -->
                 <div class="-me-2 flex items-center sm:hidden">
-                    <button @click="open = ! open" class="inline-flex items-center justify-center p-2 rounded-md text-gray-400 dark:text-gray-500 hover:text-gray-500 dark:hover:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-900 focus:outline-none focus:bg-gray-100 dark:focus:bg-gray-900 focus:text-gray-500 dark:focus:text-gray-400 transition duration-150 ease-in-out">
+                    <button @click="open = ! open" class="inline-flex items-center justify-center p-2 rounded-md text-gray-400 dark:text-gray-500 hover:text-gray-500 dark:hover:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-900 focus:outline-none">
                         <svg class="h-6 w-6" stroke="currentColor" fill="none" viewBox="0 0 24 24">
                             <path :class="{'hidden': open, 'inline-flex': ! open }" class="inline-flex" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
                             <path :class="{'hidden': ! open, 'inline-flex': open }" class="hidden" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
@@ -183,15 +157,9 @@
     <!-- Responsive Navigation Menu -->
     <div :class="{'block': open, 'hidden': ! open}" class="hidden sm:hidden">
         <div class="pt-2 pb-3 space-y-1">
-            <x-responsive-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')">
-                {{ __('Dashboard') }}
-            </x-responsive-nav-link>
-            <x-nav-link :href="route('products.index')" :active="request()->routeIs('products.*')">
-             Products
-            </x-nav-link>
+            <x-responsive-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')">Dashboard</x-responsive-nav-link>
+            <x-nav-link :href="route('products.index')" :active="request()->routeIs('products.*')">Products</x-nav-link>
         </div>
-
-        <!-- Responsive Settings Options -->
         <div class="pt-4 pb-1 border-t border-gray-200 dark:border-gray-600">
             <div class="px-4">
                 @auth
@@ -200,31 +168,6 @@
                 @else
                     <div class="font-medium text-base text-gray-800 dark:text-gray-200">Guest</div>
                     <div class="font-medium text-sm text-gray-500">-</div>
-                @endauth
-            </div>
-
-            <div class="mt-3 space-y-1">
-                @auth
-                    <x-responsive-nav-link :href="route('profile.edit')">
-                        {{ __('Profile') }}
-                    </x-responsive-nav-link>
-
-                    <form method="POST" action="{{ route('logout') }}">
-                        @csrf
-                        <x-responsive-nav-link :href="route('logout')"
-                                onclick="event.preventDefault(); this.closest('form').submit();">
-                            {{ __('Log Out') }}
-                        </x-responsive-nav-link>
-                    </form>
-                @else
-                    <x-responsive-nav-link :href="route('login')">
-                        {{ __('Log In') }}
-                    </x-responsive-nav-link>
-                    @if (Route::has('register'))
-                        <x-responsive-nav-link :href="route('register')">
-                            {{ __('Register') }}
-                        </x-responsive-nav-link>
-                    @endif
                 @endauth
             </div>
         </div>
