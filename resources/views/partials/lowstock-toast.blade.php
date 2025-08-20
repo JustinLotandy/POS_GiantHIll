@@ -1,7 +1,7 @@
-@if(($lowStockCount ?? 0) > 0 && session('just_logged_in'))
+@if(($lowStockCount ?? 0) > 0)
 <div
     x-data="{ show: true }"
-    x-init="setTimeout(()=> show=false, 5000)"
+    x-init="setTimeout(() => show = false, 5000)"
     x-show="show"
     x-transition:enter="transition ease-out duration-300"
     x-transition:enter-start="opacity-0 translate-y-2"
@@ -18,14 +18,12 @@
         <button class="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
                 @click="show=false">✕</button>
     </div>
-
     <div class="px-4 py-3">
         <div class="text-sm text-gray-700 dark:text-gray-300 mb-2">
             {{ $lowStockCount }} produk stok &lt; 15. Beberapa di antaranya:
         </div>
         <ul class="text-sm text-gray-700 dark:text-gray-300 space-y-1 max-h-40 overflow-auto">
             @foreach(($lowStocks ?? []) as $p)
-                @if(is_object($p))
                 <li class="flex justify-between">
                     <span>{{ $p->name }}</span>
                     <span class="ml-2 text-xs px-2 py-0.5 rounded-full
@@ -35,7 +33,6 @@
                         Stok: {{ $p->stock }}
                     </span>
                 </li>
-                @endif
             @endforeach
         </ul>
         <div class="mt-3 text-xs text-gray-500 dark:text-gray-400">
