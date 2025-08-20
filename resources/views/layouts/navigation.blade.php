@@ -157,33 +157,7 @@
     </div>
 
     {{-- ===== Notifikasi stok rendah (selalu berwarna & dropdown tepat di bawah titik) ===== --}}
-@php
-    $alertCount = $lowStockCount ?? 0;
-    $hasAlert = $alertCount > 0;
-@endphp
 
-<div class="hidden sm:flex sm:items-center sm:ms-6 relative" x-data="{ openNotif:false }">
-    <button
-        @click="openNotif = !openNotif"
-        class="relative inline-flex items-center px-3 py-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 focus:outline-none"
-    >
-        {{-- Bell colored state --}}
-        <span class="{{ $hasAlert ? 'text-red-600' : 'text-gray-600 dark:text-gray-300' }} relative">
-            <span class="text-lg">🔔</span>
-
-            {{-- Badge: merah + angka saat ada alert, titik abu-abu saat tidak ada --}}
-            @if($hasAlert)
-                <span
-                    class="absolute -top-1 -right-1 bg-red-600 text-white text-[11px] leading-none rounded-full px-1.5 min-w-[18px] text-center ring-2 ring-white dark:ring-gray-800">
-                    {{ $alertCount }}
-                </span>
-            @else
-                <span
-                    class="absolute -top-0.5 -right-0.5 w-2 h-2 bg-gray-300 rounded-full ring-2 ring-white dark:ring-gray-800">
-                </span>
-            @endif
-        </span>
-    </button>
 
     {{-- Dropdown tepat di bawah badge (anchor kanan-atas tombol) --}}
     <div
