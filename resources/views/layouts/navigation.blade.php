@@ -2,10 +2,10 @@
 <style>[x-cloak]{display:none !important}</style>
 <script>
   document.addEventListener('alpine:init', () => {
-    // store global untuk kontrol dropdown notif
     Alpine.store('notif', { open: false });
   });
 </script>
+
 <nav x-data="{ open: false }" class="bg-white dark:bg-gray-800 border-b border-gray-100 dark:border-gray-700">
     <!-- Primary Navigation Menu -->
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -77,7 +77,7 @@
             </div>
 
             <div class="flex items-center">
-                {{-- ===== Notifikasi stok rendah: teleport + Alpine store global ===== --}}
+                {{-- ===== Notifikasi stok rendah: teleport + backdrop (klik di mana saja untuk tutup) ===== --}}
                 @php
                     $alertCount = $lowStockCount ?? 0;
                     $hasAlert   = $alertCount > 0;
@@ -86,7 +86,7 @@
                 <div class="hidden sm:flex sm:items-center sm:ms-6 relative">
                     <button
                         data-bell
-                        @click="$store.notif.open = !$store.notif.open; window.dispatchEvent(new CustomEvent('posisi-notif'))"
+                        @click.stop="$store.notif.open = !$store.notif.open; window.dispatchEvent(new CustomEvent('posisi-notif'))"
                         class="relative inline-flex items-center px-3 py-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 focus:outline-none select-none"
                         aria-label="Notifikasi stok rendah"
                         :aria-expanded="$store.notif.open"
@@ -103,27 +103,30 @@
                         </span>
                     </button>
 
-                    {{-- Teleport dropdown ke <body> supaya nggak ketutup/clip --}}
+                    {{-- Teleport ke body: backdrop + dropdown --}}
                     <template x-teleport="body">
+                        {{-- Backdrop transparan: klik di mana saja untuk menutup --}}
+                        <div
+                            x-cloak
+                            x-show="$store.notif.open"
+                            x-transition.opacity
+                            class="fixed inset-0 z-[99998] bg-transparent"
+                            @click="$store.notif.open=false"
+                        ></div>
+
+                        {{-- Dropdown yang diposisikan tepat di bawah badge --}}
                         <div
                             x-cloak
                             x-data="{ left:0, top:0 }"
                             x-show="$store.notif.open"
                             x-transition.opacity
-                            @click.outside="$store.notif.open=false"
-                            @click.window="
-                                // Tutup jika klik bukan tombol bell
-                                if(!$event.target.closest('[data-bell]')){
-                                    $store.notif.open=false
-                                }
-                            "
                             @keydown.escape.window="$store.notif.open=false"
                             @posisi-notif.window="
                                 const btn = document.querySelector('[data-bell]');
                                 if (!btn) return;
                                 const r = btn.getBoundingClientRect();
-                                left = r.right - 320;
-                                top  = r.bottom + 8;
+                                left = r.right - 320;  // 320px = w-80
+                                top  = r.bottom + 8;   // jarak vertikal
                                 if (left < 8) left = 8;
                             "
                             x-init="
@@ -136,11 +139,42 @@
                             class="w-80 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 p-3"
                             role="dialog"
                             aria-label="Daftar notifikasi stok"
+                            @click.stop
                         >
-                            {{-- isi notifikasi --}}
+                            <div class="text-sm font-semibold text-gray-800 dark:text-gray-200 mb-2">
+                                Stok Rendah (&lt; 15)
+                            </div>
+
+                            @if(($lowStockCount ?? 0) === 0)
+                                <div class="text-sm text-gray-500 dark:text-gray-400">Semua aman 🎉</div>
+                            @else
+                                <ul class="max-h-64 overflow-auto divide-y divide-gray-100 dark:divide-gray-700">
+                                    @foreach(($lowStocks ?? []) as $p)
+                                        <li class="py-2 flex items-center justify-between">
+                                            <div class="text-sm text-gray-700 dark:text-gray-300">
+                                                {{ is_object($p) ? $p->name : '-' }}
+                                            </div>
+                                            <span class="text-xs px-2 py-0.5 rounded-full
+                                                @if(is_object($p) && $p->stock <= 0) bg-red-600 text-white
+                                                @elseif(is_object($p) && $p->stock < 5) bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300
+                                                @else bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-300 @endif">
+                                                Stok: {{ is_object($p) ? $p->stock : '-' }}
+                                            </span>
+                                        </li>
+                                    @endforeach
+                                </ul>
+                                <div class="mt-2 text-[11px] text-gray-500 dark:text-gray-400">
+                                    Menampilkan hingga 10 produk stok terendah.
+                                </div>
+                            @endif
+
+                            <div class="mt-3 text-right">
+                                <button @click="$store.notif.open=false" class="text-sm px-3 py-1 border rounded hover:bg-gray-50 dark:hover:bg-gray-700">
+                                    Tutup
+                                </button>
+                            </div>
                         </div>
                     </template>
-
                 </div>
 
                 {{-- ===== Settings Dropdown: hanya saat login ===== --}}
