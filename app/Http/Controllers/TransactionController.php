@@ -60,7 +60,7 @@ class TransactionController extends Controller
             ->first();
 
         if (!$product) {
-            return back()->with('stock_error', 'Produk tidak ditemukan.');
+            return redirect()->route('pos.index');
         }
 
         $cart = session('cart', []);
@@ -69,12 +69,12 @@ class TransactionController extends Controller
 
         // 1) Stok 0 -> tidak boleh ditambahkan
         if ((int) $product->stock <= 0) {
-            return back()->with('stock_error', 'Stok habis untuk: ' . $product->name);
+            return redirect()->route('pos.index');
         }
 
         // 2) Melebihi stok -> blok
         if ($currentQty + 1 > (int) $product->stock) {
-            return back()->with('stock_error', 'Stok tidak mencukupi untuk: ' . $product->name . '. Sisa stok: ' . $product->stock);
+            return redirect()->route('pos.index');
         }
 
         // 3) Aman -> tambahkan
@@ -87,10 +87,10 @@ class TransactionController extends Controller
 
         session(['cart' => $cart]);
 
-        return redirect()->route('pos.index')->with('success', $product->name . ' ditambahkan ke keranjang.');
+        return redirect()->route('pos.index');
     }
 
-    // Update jumlah item (tingkatkan/kurangi) — tambahkan proteksi stok saat increase
+    // Update jumlah item (tingkatkan/kurangi) — proteksi stok saat increase
     public function updateQty(Request $request)
     {
         $id     = $request->input('id');     // id_Produk
@@ -104,8 +104,7 @@ class TransactionController extends Controller
                 if ($product) {
                     $nextQty = (int) $cart[$id]['qty'] + 1;
                     if ($nextQty > (int) $product->stock) {
-                        return redirect()->route('pos.index')
-                            ->with('stock_error', 'Stok tidak mencukupi untuk: ' . $product->name . '. Sisa stok: ' . $product->stock);
+                        return redirect()->route('pos.index');
                     }
                 }
                 $cart[$id]['qty']++;
@@ -139,7 +138,7 @@ class TransactionController extends Controller
         $product = Product::where('barcode', $barcode)->first();
 
         if (!$product) {
-            return redirect()->route('pos.index')->with('stock_error', 'Produk dengan barcode tersebut tidak ditemukan.');
+            return redirect()->route('pos.index');
         }
 
         $cart = session('cart', []);
@@ -148,10 +147,10 @@ class TransactionController extends Controller
 
         // Validasi stok
         if ((int) $product->stock <= 0) {
-            return redirect()->route('pos.index')->with('stock_error', 'Stok habis untuk: ' . $product->name);
+            return redirect()->route('pos.index');
         }
         if ($currentQty + 1 > (int) $product->stock) {
-            return redirect()->route('pos.index')->with('stock_error', 'Stok tidak mencukupi untuk: ' . $product->name . '. Sisa stok: ' . $product->stock);
+            return redirect()->route('pos.index');
         }
 
         // Tambah ke cart
@@ -168,7 +167,7 @@ class TransactionController extends Controller
 
         session(['cart' => $cart]);
 
-        return redirect()->route('pos.index')->with('success', 'Produk masuk keranjang: ' . $product->name);
+        return redirect()->route('pos.index');
     }
 
     public function showCheckout()
@@ -186,7 +185,7 @@ class TransactionController extends Controller
         $total = collect($cart)->sum(fn($item) => $item['qty'] * $item['harga_sesudah']);
 
         if ($bayar < $total) {
-            return back()->with('error', 'Jumlah bayar kurang dari total.');
+            return redirect()->route('pos.checkout'); // atau back() sesuai alurmu
         }
 
         // Simpan transaksi
@@ -245,14 +244,14 @@ class TransactionController extends Controller
         // Transaction::create(...);
 
         session()->forget('cart');
-        return redirect()->route('pos.index')->with('success', 'Pembayaran berhasil! Kembalian: Rp ' . number_format($change, 0, ',', '.'));
+        return redirect()->route('pos.index');
     }
 
     public function simpanTransaksi(Request $request)
     {
         $cart = session('cart', []);
         if (empty($cart)) {
-            return redirect()->route('pos.index')->with('error', 'Keranjang kosong!');
+            return redirect()->route('pos.index');
         }
 
         $total = collect($cart)->sum(function ($i) {
@@ -261,14 +260,14 @@ class TransactionController extends Controller
 
         $bayar = $request->input('bayar');
         if ($bayar < $total) {
-            return back()->with('error', 'Uang pembayaran kurang!');
+            return redirect()->route('pos.index');
         }
 
         // Simpan transaksi manual di sini jika diperlukan
         // ...
 
         session()->forget('cart');
-        return redirect()->route('pos.index')->with('success', 'Transaksi berhasil disimpan!');
+        return redirect()->route('pos.index');
     }
 
     public function destroy($id)
@@ -280,7 +279,7 @@ class TransactionController extends Controller
 
         $transaction->delete();
 
-        return redirect()->route('transactions.index')->with('success', 'Transaksi berhasil dihapus!');
+        return redirect()->route('transactions.index');
     }
 
     public function edit($id)
@@ -315,7 +314,6 @@ class TransactionController extends Controller
 
         $transaction->save();
 
-        return redirect()->route('transactions.index')
-            ->with('success', 'Transaksi & tanggal berhasil diperbarui!');
+        return redirect()->route('transactions.index');
     }
 }
