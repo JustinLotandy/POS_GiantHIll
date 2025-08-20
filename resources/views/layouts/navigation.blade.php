@@ -27,7 +27,42 @@
         </div>
       </div>
 
-     <!-- ?
+     <!-- <div class="flex items-center">
+        {{-- ===== Ikon 🔔 + DROPDOWN DI BAWAH IKON (HOVER) ===== --}}
+        @php $count = $lowStockCount ?? 0; $has = $count > 0; @endphp
+
+        <div class="hidden sm:flex sm:items-center sm:ms-6">
+          <div class="relative group">
+            <!-- IKON -->
+            <button type="button"
+                    class="relative inline-flex items-center px-3 py-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 focus:outline-none"
+                    aria-label="Notifikasi stok rendah">
+              <span class="{{ $has ? 'text-red-600' : 'text-gray-600 dark:text-gray-300' }} relative">
+                <span class="text-lg">🔔</span>
+                @if($has)
+                   <span class="absolute -top-1 -right-1 bg-red-600 text-white text-[11px] leading-none rounded-full px-1.5 min-w-[18px] text-center ring-2 ring-white dark:ring-gray-800">{{ $count }}</span>
+                @else
+                  <span class="absolute -top-0.5 -right-0.5 w-2 h-2 bg-gray-300 rounded-full ring-2 ring-white dark:ring-gray-800"></span>
+                @endif
+              </span>
+            </button>
+
+            <!-- DROPDOWN (tepat di bawah ikon) -->
+            @if($has)
+            <div
+              class="pointer-events-none group-hover:pointer-events-auto
+                     opacity-0 group-hover:opacity-100 translate-y-0 group-hover:translate-y-1
+                     transition duration-150 ease-out
+                     absolute right-0 top-full mt-2
+                     w-80 bg-white dark:bg-gray-800 rounded-lg shadow-lg
+                     border border-gray-200 dark:border-gray-700 z-50"
+            >
+              @include('partials.lowstock-panel')
+            </div>
+            @endif
+          </div>
+        </div> 
+
         {{-- ===== Settings Dropdown (login) ===== --}}
         @auth
         <div class="hidden sm:flex sm:items-center sm:ms-6">
