@@ -2,6 +2,7 @@
 <style>[x-cloak]{display:none !important}</style>
 <script>
   document.addEventListener('alpine:init', () => {
+    // store global untuk kontrol dropdown notif
     Alpine.store('notif', { open: false });
   });
 </script>
@@ -77,7 +78,7 @@
             </div>
 
             <div class="flex items-center">
-                {{-- ===== Notifikasi stok rendah: teleport + backdrop (klik di mana saja untuk tutup) ===== --}}
+                {{-- ===== Notifikasi stok rendah: bell berwarna + teleport + backdrop ===== --}}
                 @php
                     $alertCount = $lowStockCount ?? 0;
                     $hasAlert   = $alertCount > 0;
@@ -85,6 +86,7 @@
 
                 <div class="hidden sm:flex sm:items-center sm:ms-6 relative">
                     <button
+                        type="button"
                         data-bell
                         @click.stop="$store.notif.open = !$store.notif.open; window.dispatchEvent(new CustomEvent('posisi-notif'))"
                         class="relative inline-flex items-center px-3 py-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 focus:outline-none select-none"
@@ -114,7 +116,7 @@
                             @click="$store.notif.open=false"
                         ></div>
 
-                        {{-- Dropdown yang diposisikan tepat di bawah badge --}}
+                        {{-- Dropdown tepat di bawah badge (posisi fixed dari tombol bell) --}}
                         <div
                             x-cloak
                             x-data="{ left:0, top:0 }"
@@ -141,8 +143,15 @@
                             aria-label="Daftar notifikasi stok"
                             @click.stop
                         >
-                            <div class="text-sm font-semibold text-gray-800 dark:text-gray-200 mb-2">
-                                Stok Rendah (&lt; 15)
+                            <div class="flex items-center justify-between mb-2">
+                                <div class="text-sm font-semibold text-gray-800 dark:text-gray-200">
+                                    Stok Rendah (&lt; 15)
+                                </div>
+                                <button
+                                    type="button"
+                                    class="text-xs px-2 py-1 rounded border hover:bg-gray-50 dark:hover:bg-gray-700"
+                                    @click="$store.notif.open=false"
+                                >Tutup</button>
                             </div>
 
                             @if(($lowStockCount ?? 0) === 0)
@@ -167,12 +176,6 @@
                                     Menampilkan hingga 10 produk stok terendah.
                                 </div>
                             @endif
-
-                            <div class="mt-3 text-right">
-                                <button @click="$store.notif.open=false" class="text-sm px-3 py-1 border rounded hover:bg-gray-50 dark:hover:bg-gray-700">
-                                    Tutup
-                                </button>
-                            </div>
                         </div>
                     </template>
                 </div>
