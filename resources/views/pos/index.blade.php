@@ -23,7 +23,7 @@
     <div class="bg-gray-100 min-h-screen flex flex-col md:flex-row gap-6 p-6">
 
         <!-- Produk Grid -->
-        <div class="w-full md:w-3/5" style="margin-bottom: 20px;">
+        <div class="w-full md:w-3/5" style="margin-bottom: 200px;">
             <form action="{{ route('pos.cariBarcode') }}" method="GET" class="flex gap-2">
                 <input
                     id="scan-barcode"
