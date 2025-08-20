@@ -39,9 +39,9 @@ class ReportController extends Controller
 
     /**
      * Tempelkan metrik per transaksi:
-     * - total_profit   : SUM((price_jual - harga_modal_produk) * qty)
-     * - products_label : "Nama xQty; Nama xQty"
-     * Catatan: ambil harga modal dari product->harga_sebelum (ganti jika kolommu beda).
+     * - total_profit         : SUM((price - harga_modal_produk) * qty)
+     * - products_label_html  : "Nama xQty<br>Nama xQty" (untuk tampil ke bawah)
+     * Catatan: ganti kolom modal jika bukan `harga_sebelum`.
      */
     private function attachPerTxnMetrics($transactions): void
     {
@@ -52,15 +52,15 @@ class ReportController extends Controller
             foreach ($trx->items ?? [] as $it) {
                 $qty   = (int) ($it->quantity ?? 0);
                 $jual  = (int) ($it->price ?? 0); // harga saat transaksi
-                $modal = (int) optional($it->product)->harga_sebelum; // GANTI jika modal di kolom lain
-                $nama  = optional($it->product)->name ?: '-';
+                $modal = (int) optional($it->product)->harga_sebelum; // GANTI bila perlu
+                $nama  = trim(optional($it->product)->name ?? '-');
 
                 $totalProfit += max(0, $jual - $modal) * $qty;
-                $labels[] = trim($nama).' x'.$qty;
+                $labels[] = e($nama).' x'.$qty; // aman dari XSS, nanti kita join dengan <br>
             }
 
             $trx->setAttribute('total_profit', $totalProfit);
-            $trx->setAttribute('products_label', implode('; ', $labels));
+            $trx->setAttribute('products_label_html', implode('<br>', $labels));
         }
     }
 

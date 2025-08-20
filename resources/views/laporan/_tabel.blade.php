@@ -26,10 +26,8 @@
       <th class="px-3 py-2 text-left">ID</th>
       <th class="px-3 py-2 text-left">User</th>
       <th class="px-3 py-2 text-center">Metode</th>
-
-      <th class="px-3 py-2 text-left">Produk</th>            {{-- NEW --}}
-      <th class="px-3 py-2 text-right">Profit</th>           {{-- tetap --}}
-
+      <th class="px-3 py-2 text-left">Produk</th>
+      <th class="px-3 py-2 text-right">Profit</th>
       <th class="px-3 py-2 text-right">Total</th>
       <th class="px-3 py-2 text-right">Dibayar</th>
       <th class="px-3 py-2 text-right">Kembalian</th>
@@ -48,29 +46,12 @@
         <td class="px-3 py-2 text-center">{{ $row->paymentMethod->name_payment ?? '-' }}</td>
 
         <td class="px-3 py-2">
-          {{ $row->products_label ?? '' }}
+          {!! $row->products_label_html ?? '' !!} {{-- tampil ke bawah --}}
         </td>
-        <td class="px-3 py-2 text-right">Rp {{ number_format($row->total_profit ?? 0,0,',','.') }}</td>
 
+        <td class="px-3 py-2 text-right">Rp {{ number_format($row->total_profit ?? 0,0,',','.') }}</td>
         <td class="px-3 py-2 text-right">Rp {{ number_format($row->total,0,',','.') }}</td>
         <td class="px-3 py-2 text-right">Rp {{ number_format($row->paid,0,',','.') }}</td>
         <td class="px-3 py-2 text-right">Rp {{ number_format($row->change,0,',','.') }}</td>
         <td class="px-3 py-2">
-          {{ optional($row->created_at)->timezone('Asia/Jakarta')->format('Y-m-d H:i:s') }}
-        </td>
-      </tr>
-    @empty
-      <tr>
-        <td colspan="9" class="px-3 py-6 text-center text-gray-500">Tidak ada data.</td>
-      </tr>
-    @endforelse
-  </tbody>
-  <tfoot>
-    <tr class="border-t font-semibold bg-gray-50">
-      <td colspan="4" class="px-3 py-2 text-right">Grand Total</td>
-      <td class="px-3 py-2 text-right">Rp {{ number_format($gProfit,0,',','.') }}</td>  {{-- Profit --}}
-      <td class="px-3 py-2 text-right">Rp {{ number_format($gTotal,0,',','.') }}</td>   {{-- Omzet --}}
-      <td colspan="3"></td>
-    </tr>
-  </tfoot>
-</table>
+          {{

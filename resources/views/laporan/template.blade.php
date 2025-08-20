@@ -30,7 +30,7 @@
                 <th>ID Transaksi</th>
                 <th>User</th>
                 <th>Metode</th>
-                <th>Produk</th>     {{-- NEW --}}
+                <th>Produk</th>
                 <th class="right">Profit</th>
                 <th class="right">Total</th>
                 <th class="right">Dibayar</th>
@@ -49,7 +49,7 @@
                     <td>{{ $trx->id_Transaction }}</td>
                     <td>{{ $trx->user->name ?? '-' }}</td>
                     <td>{{ $trx->paymentMethod->name_payment ?? '-' }}</td>
-                    <td>{{ $trx->products_label ?? '' }}</td>
+                    <td>{!! $trx->products_label_html ?? '' !!}</td> {{-- tampil ke bawah --}}
                     <td class="right">Rp {{ number_format($trx->total_profit ?? 0,0,',','.') }}</td>
                     <td class="right">Rp {{ number_format($trx->total,0,',','.') }}</td>
                     <td class="right">Rp {{ number_format($trx->paid,0,',','.') }}</td>
@@ -63,8 +63,8 @@
         <tfoot>
             <tr>
                 <th colspan="5" class="right">Grand Total</th>
-                <th class="right">Rp {{ number_format($gProfit,0,',','.') }}</th>  {{-- Profit --}}
-                <th class="right">Rp {{ number_format($gTotal,0,',','.') }}</th>   {{-- Omzet --}}
+                <th class="right">Rp {{ number_format($gProfit,0,',','.') }}</th>
+                <th class="right">Rp {{ number_format($gTotal,0,',','.') }}</th>
                 <th colspan="3"></th>
             </tr>
         </tfoot>
