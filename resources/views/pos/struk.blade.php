@@ -32,9 +32,9 @@
 <div class="safe-top"></div>
 
 <pre>
-      Gianthill
-       INVOICE
-{{ now()->format('Y-m-d H:i:s') }}
+           Gianthill
+            INVOICE
+     {{ now()->format('Y-m-d H:i:s') }}
 ------------------------------
 Item         Qty   Harga   Sub
 ------------------------------
