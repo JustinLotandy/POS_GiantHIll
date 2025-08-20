@@ -69,46 +69,94 @@
             </div>
 
             <div class="flex items-center">
-                {{-- ===== Notifikasi stok rendah (aman untuk guest) ===== --}}
+                {{-- ===== Notifikasi stok rendah: teleport + anchor tepat di bawah badge ===== --}}
+                @php
+                    $alertCount = $lowStockCount ?? 0;
+                    $hasAlert   = $alertCount > 0;
+                @endphp
+
                 <div class="hidden sm:flex sm:items-center sm:ms-6 relative" x-data="{ openNotif:false }">
-                    <button @click="openNotif = !openNotif" class="relative inline-flex items-center px-3 py-2 rounded-md text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 focus:outline-none">
-                        <span class="text-lg">🔔</span>
-                        @if(($lowStockCount ?? 0) > 0)
-                            <span class="absolute -top-1 -right-1 bg-red-600 text-white text-xs rounded-full px-1.5 min-w-[18px] text-center">
-                                {{ $lowStockCount }}
-                            </span>
-                        @endif
+                    <button
+                        data-bell
+                        @click="openNotif = !openNotif; window.dispatchEvent(new CustomEvent('posisi-notif'))"
+                        class="relative inline-flex items-center px-3 py-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 focus:outline-none select-none"
+                        aria-label="Notifikasi stok rendah"
+                        aria-haspopup="true"
+                        :aria-expanded="openNotif"
+                    >
+                        <span class="{{ $hasAlert ? 'text-red-600' : 'text-gray-600 dark:text-gray-300' }} relative">
+                            <span class="text-lg">🔔</span>
+
+                            {{-- Badge: merah (angka) saat ada alert; titik abu-abu saat tidak ada --}}
+                            @if($hasAlert)
+                                <span
+                                    class="absolute -top-1 -right-1 bg-red-600 text-white text-[11px] leading-none rounded-full px-1.5 min-w-[18px] text-center ring-2 ring-white dark:ring-gray-800">
+                                    {{ $alertCount }}
+                                </span>
+                            @else
+                                <span
+                                    class="absolute -top-0.5 -right-0.5 w-2 h-2 bg-gray-300 rounded-full ring-2 ring-white dark:ring-gray-800">
+                                </span>
+                            @endif
+                        </span>
                     </button>
 
-                    <div x-show="openNotif" @click.outside="openNotif=false"
-                         class="absolute right-0 mt-12 w-80 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 p-3 z-50">
-                        <div class="text-sm font-semibold text-gray-800 dark:text-gray-200 mb-2">
-                            Stok Rendah (&lt; 15)
-                        </div>
-
-                        @if(($lowStockCount ?? 0) === 0)
-                            <div class="text-sm text-gray-500 dark:text-gray-400">Semua aman 🎉</div>
-                        @else
-                            <ul class="max-h-64 overflow-auto divide-y divide-gray-100 dark:divide-gray-700">
-                                @foreach(($lowStocks ?? []) as $p)
-                                    <li class="py-2 flex items-center justify-between">
-                                        <div class="text-sm text-gray-700 dark:text-gray-300">
-                                            {{ is_object($p) ? $p->name : '-' }}
-                                        </div>
-                                        <span class="text-xs px-2 py-0.5 rounded-full
-                                            @if(is_object($p) && $p->stock <= 0) bg-red-600 text-white
-                                            @elseif(is_object($p) && $p->stock < 5) bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300
-                                            @else bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-300 @endif">
-                                            Stok: {{ is_object($p) ? $p->stock : '-' }}
-                                        </span>
-                                    </li>
-                                @endforeach
-                            </ul>
-                            <div class="mt-2 text-[11px] text-gray-500 dark:text-gray-400">
-                                Menampilkan hingga 10 produk stok terendah.
+                    {{-- === Dropdown diteleport ke <body> agar tidak ketutup/ter-clip === --}}
+                    <template x-teleport="body">
+                        <div
+                            x-cloak
+                            x-data="{ left:0, top:0 }"
+                            x-show="$root.openNotif"
+                            x-transition.opacity
+                            @click.outside="$root.openNotif=false"
+                            @keydown.escape.window="$root.openNotif=false"
+                            @posisi-notif.window="
+                                const btn = document.querySelector('[data-bell]');
+                                if (!btn) return;
+                                const r = btn.getBoundingClientRect();
+                                left = r.right - 320;  // 320px = w-80
+                                top  = r.bottom + 8;   // jarak vertikal 8px
+                                if (left < 8) left = 8; // jaga tidak keluar kiri
+                            "
+                            x-init="
+                                $nextTick(() => window.dispatchEvent(new CustomEvent('posisi-notif')));
+                                const place = () => window.dispatchEvent(new CustomEvent('posisi-notif'));
+                                window.addEventListener('resize', place);
+                                window.addEventListener('scroll', place, true);
+                            "
+                            :style="`position:fixed; z-index:99999; left:${left}px; top:${top}px;`"
+                            class="w-80 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 p-3"
+                            role="dialog"
+                            aria-label="Daftar notifikasi stok"
+                        >
+                            <div class="text-sm font-semibold text-gray-800 dark:text-gray-200 mb-2">
+                                Stok Rendah (&lt; 15)
                             </div>
-                        @endif
-                    </div>
+
+                            @if(($lowStockCount ?? 0) === 0)
+                                <div class="text-sm text-gray-500 dark:text-gray-400">Semua aman 🎉</div>
+                            @else
+                                <ul class="max-h-64 overflow-auto divide-y divide-gray-100 dark:divide-gray-700">
+                                    @foreach(($lowStocks ?? []) as $p)
+                                        <li class="py-2 flex items-center justify-between">
+                                            <div class="text-sm text-gray-700 dark:text-gray-300">
+                                                {{ is_object($p) ? $p->name : '-' }}
+                                            </div>
+                                            <span class="text-xs px-2 py-0.5 rounded-full
+                                                @if(is_object($p) && $p->stock <= 0) bg-red-600 text-white
+                                                @elseif(is_object($p) && $p->stock < 5) bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300
+                                                @else bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-300 @endif">
+                                                Stok: {{ is_object($p) ? $p->stock : '-' }}
+                                            </span>
+                                        </li>
+                                    @endforeach
+                                </ul>
+                                <div class="mt-2 text-[11px] text-gray-500 dark:text-gray-400">
+                                    Menampilkan hingga 10 produk stok terendah.
+                                </div>
+                            @endif
+                        </div>
+                    </template>
                 </div>
 
                 {{-- ===== Settings Dropdown: hanya saat login ===== --}}
@@ -156,42 +204,53 @@
         </div>
     </div>
 
-    {{-- ===== Notifikasi stok rendah (selalu berwarna & dropdown tepat di bawah titik) ===== --}}
-
-
-    {{-- Dropdown tepat di bawah badge (anchor kanan-atas tombol) --}}
-    <div
-        x-show="openNotif"
-        x-transition.origin.top.right
-        @click.outside="openNotif=false"
-        class="absolute top-full right-0 mt-2 translate-x-0 w-80 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 p-3 z-50"
-    >
-        <div class="text-sm font-semibold text-gray-800 dark:text-gray-200 mb-2">
-            Stok Rendah (&lt; 15)
+    <!-- Responsive Navigation Menu -->
+    <div :class="{'block': open, 'hidden': ! open}" class="hidden sm:hidden">
+        <div class="pt-2 pb-3 space-y-1">
+            <x-responsive-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')">
+                {{ __('Dashboard') }}
+            </x-responsive-nav-link>
+            <x-nav-link :href="route('products.index')" :active="request()->routeIs('products.*')">
+             Products
+            </x-nav-link>
         </div>
 
-        @if($alertCount === 0)
-            <div class="text-sm text-gray-500 dark:text-gray-400">Semua aman 🎉</div>
-        @else
-            <ul class="max-h-64 overflow-auto divide-y divide-gray-100 dark:divide-gray-700">
-                @foreach(($lowStocks ?? []) as $p)
-                    <li class="py-2 flex items-center justify-between">
-                        <div class="text-sm text-gray-700 dark:text-gray-300">
-                            {{ is_object($p) ? $p->name : '-' }}
-                        </div>
-                        <span class="text-xs px-2 py-0.5 rounded-full
-                            @if(is_object($p) && $p->stock <= 0) bg-red-600 text-white
-                            @elseif(is_object($p) && $p->stock < 5) bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300
-                            @else bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-300 @endif">
-                            Stok: {{ is_object($p) ? $p->stock : '-' }}
-                        </span>
-                    </li>
-                @endforeach
-            </ul>
-            <div class="mt-2 text-[11px] text-gray-500 dark:text-gray-400">
-                Menampilkan hingga 10 produk stok terendah.
+        <!-- Responsive Settings Options -->
+        <div class="pt-4 pb-1 border-t border-gray-200 dark:border-gray-600">
+            <div class="px-4">
+                @auth
+                    <div class="font-medium text-base text-gray-800 dark:text-gray-200">{{ Auth::user()->name }}</div>
+                    <div class="font-medium text-sm text-gray-500">{{ Auth::user()->email }}</div>
+                @else
+                    <div class="font-medium text-base text-gray-800 dark:text-gray-200">Guest</div>
+                    <div class="font-medium text-sm text-gray-500">-</div>
+                @endauth
             </div>
-        @endif
+
+            <div class="mt-3 space-y-1">
+                @auth
+                    <x-responsive-nav-link :href="route('profile.edit')">
+                        {{ __('Profile') }}
+                    </x-responsive-nav-link>
+
+                    <form method="POST" action="{{ route('logout') }}">
+                        @csrf
+                        <x-responsive-nav-link :href="route('logout')"
+                                onclick="event.preventDefault(); this.closest('form').submit();">
+                            {{ __('Log Out') }}
+                        </x-responsive-nav-link>
+                    </form>
+                @else
+                    <x-responsive-nav-link :href="route('login')">
+                        {{ __('Log In') }}
+                    </x-responsive-nav-link>
+                    @if (Route::has('register'))
+                        <x-responsive-nav-link :href="route('register')">
+                            {{ __('Register') }}
+                        </x-responsive-nav-link>
+                    @endif
+                @endauth
+            </div>
+        </div>
     </div>
-</div>
 </nav>
