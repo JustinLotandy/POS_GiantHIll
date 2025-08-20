@@ -22,7 +22,7 @@ class PermissionRoleSeeder extends Seeder
             'users' => ['lihat', 'tambah', 'edit', 'hapus'],
             'payment_methods' => ['lihat', 'tambah', 'edit', 'hapus'],
             'roles' => ['lihat', 'tambah', 'edit', 'hapus'],
-            'laporan' => ['harian', 'mingguan', 'bulanan'],
+            'laporan' => ['harian', 'mingguan', 'bulanan','tahunan'],
             'dashboard' => ['lihat'],
             'pos' => ['transaksi']
         ];
