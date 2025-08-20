@@ -23,17 +23,19 @@
     <div class="bg-gray-100 min-h-screen flex flex-col md:flex-row gap-6 p-6">
 
         <!-- Produk Grid -->
-        <div class="w-full md:w-3/5" style="margin-bottom: 200px;">
-            <form action="{{ route('pos.cariBarcode') }}" method="GET" class="flex gap-2">
+        <div class="w-full md:w-3/5" style="">
+            <form action="{{ route('pos.cariBarcode') }}" method="GET" class="flex items-center gap-3 mb-6">
                 <input
                     id="scan-barcode"
                     name="barcode"
                     type="text"
                     autofocus
-                    class="w-full md:w-2/3 px-4 py-2 rounded border border-gray-300 focus:outline-blue-500"
+                    class="w-full md:w-2/3 px-4 py-2 rounded border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
                     placeholder="Scan barcode produk atau cari nama/SKU..."
                 >
-                <button class="bg-blue-500 px-4 py-2 text-white rounded hover:bg-blue-600 transition">Scan</button>
+                <button class="bg-blue-500 px-4 py-2 text-white rounded hover:bg-blue-600 transition">
+                    Scan
+                </button>
             </form>
 
             <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-8 mt-5">
