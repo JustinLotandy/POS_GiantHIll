@@ -36,7 +36,7 @@
                 <button class="bg-blue-500 px-4 py-2 text-white rounded hover:bg-blue-600 transition">Scan</button>
             </form>
 
-            <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-8 mt-5">
+            <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-12 mt-5">
                 @foreach ($products as $product)
                     <div class="bg-white rounded-xl shadow p-4 flex flex-col items-center border hover:shadow-lg transition relative overflow-hidden">
                         {{-- Pita peringatan stok --}}
