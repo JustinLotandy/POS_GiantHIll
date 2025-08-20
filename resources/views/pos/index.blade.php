@@ -145,4 +145,15 @@
             </div>
         </div>
     </div>
+    @if(session('stock_error'))
+  <div class="fixed top-5 right-5 bg-red-600 text-white px-4 py-2 rounded shadow-lg z-50">
+      {{ session('stock_error') }}
+  </div>
+@endif
+
+@if(session('success'))
+  <div class="fixed top-5 right-5 bg-green-600 text-white px-4 py-2 rounded shadow-lg z-50">
+      {{ session('success') }}
+  </div>
+@endif
 </x-app-layout>

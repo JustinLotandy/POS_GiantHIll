@@ -1,108 +1,321 @@
-{{-- resources/views/pos/index.blade.php --}}
-<x-app-layout>
-    <x-slot name="header">
-        <h2 class="font-semibold text-xl text-gray-800 dark:text-gray-200 leading-tight">
-            Point of Sale
-        </h2>
-    </x-slot>
+<?php
 
-    <div class="py-6">
-        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
-            <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
-                @foreach($products as $product)
-                    <div class="bg-white dark:bg-gray-800 rounded-xl shadow p-4 relative">
-                        @if($product->stock <= 0)
-                            <div class="absolute top-2 left-2 right-2 bg-red-600 text-white text-xs font-semibold px-2 py-1 rounded">
-                                HABIS — TIDAK BISA DIJUAL
-                            </div>
-                        @endif
+namespace App\Http\Controllers;
 
-                        <img src="{{ asset('storage/'.$product->image) }}" alt="{{ $product->name }}"
-                             class="w-full h-28 object-cover rounded">
+use Illuminate\Http\Request;
+use App\Models\Product;
+use App\Models\Transaction;
+use App\Models\TransactionItem;
+use Illuminate\Support\Facades\DB;
+use App\Models\PaymentMethod;
+use Illuminate\Support\Str;
+use App\Models\User;
+use Carbon\Carbon;
 
-                        <div class="mt-3 font-bold text-gray-800 dark:text-gray-200">
-                            {{ $product->name }}
-                        </div>
-                        <div class="text-sm {{ $product->stock > 0 ? 'text-green-600' : 'text-red-600' }}">
-                            Stok: {{ $product->stock }}
-                        </div>
-                        <div class="text-orange-600 font-bold">
-                            Rp {{ number_format($product->harga_sesudah,0,',','.') }}
-                        </div>
+class TransactionController extends Controller
+{
+    public function __construct()
+    {
+        // Lihat POS dan checkout
+        $this->middleware('permission:transactions.lihat')->only([
+            'pos', 'addToCart', 'updateQty', 'removeFromCart',
+            'cariBarcode', 'showCheckout', 'checkout', 'struk', 'index'
+        ]);
 
-                        @if($product->stock > 0)
-                            <form method="POST" action="{{ route('pos.addToCart', $product->id_Produk) }}">
-                                @csrf
-                                <button type="submit"
-                                        class="mt-2 w-full text-center bg-blue-600 text-white py-1 rounded hover:bg-blue-700">
-                                    Tambah +
-                                </button>
-                            </form>
-                        @else
-                            <button type="button"
-                                    onclick="openEmptyPopup()"
-                                    class="mt-2 w-full text-center bg-gray-400 text-white py-1 rounded cursor-not-allowed">
-                                Stok Habis
-                            </button>
-                        @endif
-                    </div>
-                @endforeach
-            </div>
-        </div>
-    </div>
+        // Tambah transaksi (jika ada metode store manual)
+        $this->middleware('permission:transactions.tambah')->only(['store']);
 
-    {{-- === POPUP STOCK ERROR DARI SESSION === --}}
-    @if(session('stock_error'))
-      <div id="stock-popup"
-           class="fixed inset-0 z-[999999] flex items-center justify-center bg-black/60">
-        <div class="w-[92vw] max-w-md bg-white rounded-xl shadow-2xl border border-gray-200">
-          <div class="px-5 py-3 border-b border-gray-200 flex items-center justify-between">
-            <div class="font-semibold text-gray-800">Stok Tidak Tersedia</div>
-            <button onclick="document.getElementById('stock-popup').remove()"
-                    class="px-3 py-1.5 text-sm rounded bg-gray-100 hover:bg-gray-200">
-              Tutup
-            </button>
-          </div>
-          <div class="px-5 py-4 text-sm text-gray-700">
-            {{ session('stock_error') }}
-          </div>
-        </div>
-      </div>
-    @endif
+        // Edit transaksi
+        $this->middleware('permission:transactions.edit')->only(['edit', 'update']);
 
-    {{-- === TEMPLATE POPUP UNTUK STOK HABIS === --}}
-    <div id="stock-empty-template" class="hidden">
-      <div class="fixed inset-0 z-[999999] flex items-center justify-center bg-black/60">
-        <div class="w-[92vw] max-w-md bg-white rounded-xl shadow-2xl border border-gray-200">
-          <div class="px-5 py-3 border-b border-gray-200 flex items-center justify-between">
-            <div class="font-semibold text-gray-800">Stok Habis</div>
-            <button class="btn-popup-close px-3 py-1.5 text-sm rounded bg-gray-100 hover:bg-gray-200">
-              Tutup
-            </button>
-          </div>
-          <div class="px-5 py-4 text-sm text-gray-700">
-            Stok produk ini sudah <b>HABIS</b>, tidak bisa ditambahkan ke keranjang.
-          </div>
-        </div>
-      </div>
-    </div>
+        // Hapus transaksi
+        $this->middleware('permission:transactions.hapus')->only(['destroy']);
+    }
 
-    <script>
-      function openEmptyPopup() {
-        const tpl = document.getElementById('stock-empty-template');
-        if (!tpl) return;
-        const wrapper = tpl.firstElementChild.cloneNode(true);
+    // Tampilkan halaman POS
+    public function pos()
+    {
+        $products = Product::all();
+        $cart = session('cart', []);
+        return view('pos.index', compact('products', 'cart'));
+    }
 
-        // close by button
-        wrapper.querySelector('.btn-popup-close').addEventListener('click', () => {
-            wrapper.remove();
+    public function index()
+    {
+        $transactions = Transaction::with(['paymentMethod', 'user'])
+            ->orderBy('created_at', 'desc')
+            ->paginate(10);
+
+        return view('transactions.index', compact('transactions'));
+    }
+
+    // =========================
+    //  Tambah ke cart (id/barcode)  -- VALIDASI STOK
+    // =========================
+    public function addToCart(Request $request)
+    {
+        $id = $request->input('id'); // id_Produk dari form
+        $product = Product::where('id_Produk', $id)
+            ->orWhere('barcode', $id)
+            ->first();
+
+        if (!$product) {
+            return back()->with('stock_error', 'Produk tidak ditemukan.');
+        }
+
+        $cart = session('cart', []);
+        $key  = $product->id_Produk;
+        $currentQty = isset($cart[$key]) ? (int) $cart[$key]['qty'] : 0;
+
+        // 1) Stok 0 -> tidak boleh ditambahkan
+        if ((int) $product->stock <= 0) {
+            return back()->with('stock_error', 'Stok habis untuk: ' . $product->name);
+        }
+
+        // 2) Melebihi stok -> blok
+        if ($currentQty + 1 > (int) $product->stock) {
+            return back()->with('stock_error', 'Stok tidak mencukupi untuk: ' . $product->name . '. Sisa stok: ' . $product->stock);
+        }
+
+        // 3) Aman -> tambahkan
+        $cart[$key] = [
+            'id'            => $product->id_Produk,
+            'name'          => $product->name,
+            'harga_sesudah' => $product->harga_sesudah,
+            'qty'           => $currentQty + 1,
+        ];
+
+        session(['cart' => $cart]);
+
+        return redirect()->route('pos.index')->with('success', $product->name . ' ditambahkan ke keranjang.');
+    }
+
+    // Update jumlah item (tingkatkan/kurangi) — tambahkan proteksi stok saat increase
+    public function updateQty(Request $request)
+    {
+        $id     = $request->input('id');     // id_Produk
+        $action = $request->input('action'); // increase / decrease
+        $cart   = session('cart', []);
+
+        if (isset($cart[$id])) {
+            if ($action === 'increase') {
+                // Cek stok produk sebelum menambah
+                $product = Product::find($id);
+                if ($product) {
+                    $nextQty = (int) $cart[$id]['qty'] + 1;
+                    if ($nextQty > (int) $product->stock) {
+                        return redirect()->route('pos.index')
+                            ->with('stock_error', 'Stok tidak mencukupi untuk: ' . $product->name . '. Sisa stok: ' . $product->stock);
+                    }
+                }
+                $cart[$id]['qty']++;
+            } elseif ($action === 'decrease' && $cart[$id]['qty'] > 1) {
+                $cart[$id]['qty']--;
+            }
+        }
+
+        session(['cart' => $cart]);
+        return redirect()->route('pos.index');
+    }
+
+    // Hapus satu item dari cart
+    public function removeFromCart(Request $request)
+    {
+        $id = $request->input('id');
+        $cart = session('cart', []);
+        if (isset($cart[$id])) {
+            unset($cart[$id]);
+        }
+        session(['cart' => $cart]);
+        return redirect()->route('pos.index');
+    }
+
+    // =========================
+    //  Scan / cari barcode -- VALIDASI STOK
+    // =========================
+    public function cariBarcode(Request $request)
+    {
+        $barcode = $request->input('barcode');
+        $product = Product::where('barcode', $barcode)->first();
+
+        if (!$product) {
+            return redirect()->route('pos.index')->with('stock_error', 'Produk dengan barcode tersebut tidak ditemukan.');
+        }
+
+        $cart = session('cart', []);
+        $key  = $product->id_Produk;
+        $currentQty = isset($cart[$key]) ? (int) $cart[$key]['qty'] : 0;
+
+        // Validasi stok
+        if ((int) $product->stock <= 0) {
+            return redirect()->route('pos.index')->with('stock_error', 'Stok habis untuk: ' . $product->name);
+        }
+        if ($currentQty + 1 > (int) $product->stock) {
+            return redirect()->route('pos.index')->with('stock_error', 'Stok tidak mencukupi untuk: ' . $product->name . '. Sisa stok: ' . $product->stock);
+        }
+
+        // Tambah ke cart
+        if (isset($cart[$key])) {
+            $cart[$key]['qty']++;
+        } else {
+            $cart[$key] = [
+                'id'            => $product->id_Produk, // pakai id_Produk
+                'name'          => $product->name,
+                'harga_sesudah' => $product->harga_sesudah,
+                'qty'           => 1,
+            ];
+        }
+
+        session(['cart' => $cart]);
+
+        return redirect()->route('pos.index')->with('success', 'Produk masuk keranjang: ' . $product->name);
+    }
+
+    public function showCheckout()
+    {
+        $cart = session('cart', []);
+        $paymentMethods = PaymentMethod::all();
+        return view('pos.checkout', compact('cart', 'paymentMethods'));
+    }
+
+    public function checkout(Request $request)
+    {
+        $cart = session('cart', []);
+        $bayar = $request->input('bayar');
+        $idPaymentMethod = $request->input('id_PaymentMethod');
+        $total = collect($cart)->sum(fn($item) => $item['qty'] * $item['harga_sesudah']);
+
+        if ($bayar < $total) {
+            return back()->with('error', 'Jumlah bayar kurang dari total.');
+        }
+
+        // Simpan transaksi
+        $trx = Transaction::create([
+            // 'id_Transaction'   => (string) Str::uuid(),
+            'id_PaymentMethod'  => $idPaymentMethod,
+            'total'             => $total,
+            'paid'              => $bayar,
+            'change'            => $bayar - $total,
+            'user_id'           => auth()->id(),
+        ]);
+
+        foreach ($cart as $item) {
+            TransactionItem::create([
+                'id_TransactionItem' => (string) Str::uuid(),
+                'id_Transaction'     => $trx->id_Transaction,
+                'id_Produk'          => $item['id'],
+                'nama_produk'        => $item['name'],
+                'quantity'           => $item['qty'],
+                'price'              => $item['harga_sesudah'],
+                'subtotal'           => $item['qty'] * $item['harga_sesudah'],
+            ]);
+
+            // Kurangi stok produk
+            $product = Product::find($item['id']);
+            if ($product) {
+                $product->stock = max(0, $product->stock - $item['qty']);
+                $product->save();
+            }
+        }
+
+        session()->forget('cart');
+
+        // Redirect ke struk
+        return redirect()->route('pos.struk', $trx->id_Transaction);
+    }
+
+    public function struk($id)
+    {
+        $trx = Transaction::with('items.product', 'user')->findOrFail($id);
+        return view('pos.struk', compact('trx'));
+    }
+
+    public function processPayment(Request $request)
+    {
+        $cart = session('cart', []);
+        $total = array_sum(array_map(fn($i) => $i['qty'] * $i['harga_sesudah'], $cart));
+
+        $request->validate([
+            'amount_paid' => 'required|numeric|min:' . $total,
+        ]);
+
+        $change = $request->amount_paid - $total;
+
+        // Simpan transaksi bila diperlukan
+        // Transaction::create(...);
+
+        session()->forget('cart');
+        return redirect()->route('pos.index')->with('success', 'Pembayaran berhasil! Kembalian: Rp ' . number_format($change, 0, ',', '.'));
+    }
+
+    public function simpanTransaksi(Request $request)
+    {
+        $cart = session('cart', []);
+        if (empty($cart)) {
+            return redirect()->route('pos.index')->with('error', 'Keranjang kosong!');
+        }
+
+        $total = collect($cart)->sum(function ($i) {
+            return $i['qty'] * $i['harga_sesudah'];
         });
-        // close by clicking overlay
-        wrapper.addEventListener('click', (e) => {
-            if (e.target === wrapper) wrapper.remove();
-        });
 
-        document.body.appendChild(wrapper);
-      }
-    </script>
-</x-app-layout>
+        $bayar = $request->input('bayar');
+        if ($bayar < $total) {
+            return back()->with('error', 'Uang pembayaran kurang!');
+        }
+
+        // Simpan transaksi manual di sini jika diperlukan
+        // ...
+
+        session()->forget('cart');
+        return redirect()->route('pos.index')->with('success', 'Transaksi berhasil disimpan!');
+    }
+
+    public function destroy($id)
+    {
+        $transaction = Transaction::findOrFail($id);
+
+        // Jika ingin juga hapus detail transaksi (opsional, jika ada relasi)
+        // $transaction->items()->delete();
+
+        $transaction->delete();
+
+        return redirect()->route('transactions.index')->with('success', 'Transaksi berhasil dihapus!');
+    }
+
+    public function edit($id)
+    {
+        $transaction   = Transaction::findOrFail($id);
+        $users         = User::all();
+        $paymentMethods= PaymentMethod::all();
+
+        return view('transactions.edit', compact('transaction', 'users', 'paymentMethods'));
+    }
+
+    public function update(Request $request, $id)
+    {
+        $request->validate([
+            'id_PaymentMethod' => 'required|exists:payment_methods,id_PaymentMethod',
+            'total'            => 'required|numeric|min:0',
+            'paid'             => 'required|numeric|min:0',
+            'change'           => 'required|numeric|min:0',
+            'created_at'       => 'required|date', // validasi tanggal (edit saja)
+        ]);
+
+        $transaction = Transaction::findOrFail($id);
+
+        // field biasa
+        $transaction->id_PaymentMethod = $request->id_PaymentMethod;
+        $transaction->total            = $request->total;
+        $transaction->paid             = $request->paid;
+        $transaction->change           = $request->change;
+
+        // tanggal transaksi (pakai created_at)
+        $transaction->created_at = Carbon::parse($request->created_at);
+
+        $transaction->save();
+
+        return redirect()->route('transactions.index')
+            ->with('success', 'Transaksi & tanggal berhasil diperbarui!');
+    }
+}
