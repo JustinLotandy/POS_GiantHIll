@@ -50,7 +50,7 @@
                             </div>
                         @elseif($product->stock < 15)
                             <div class="absolute top-2 left-2 right-2">
-                                <span style="color : yellow;" class="block text-[11px] tracking-wide font-semibold uppercase bg-yellow-500 text-black px-3 py-1 rounded">
+                                <span style="background-color : yellow;" class="block text-[11px] tracking-wide font-semibold uppercase bg-yellow-500 text-black px-3 py-1 rounded">
                                     Stok Rendah
                                 </span>
                             </div>
