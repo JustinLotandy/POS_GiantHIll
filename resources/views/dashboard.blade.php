@@ -1,22 +1,25 @@
 {{-- resources/views/dashboard.blade.php --}}
 @php
-    // Ambil data low-stock langsung di view supaya langsung jalan
+    // Ambil data low-stock langsung di view agar langsung berfungsi
     try {
-        $lowStocks = \App\Models\Product::orderBy('stock', 'asc')
+        $lowStocks = \App\Models\Product::where('stock', '<', 15)
+            ->orderBy('stock', 'asc')
             ->limit(10)
             ->get(['id_Produk', 'name', 'stock']);
-        $lowStockUnder15 = $lowStocks->where('stock', '<', 15);
-        $lowStockCount   = $lowStockUnder15->count();
+        $lowStockCount = $lowStocks->count();
     } catch (\Throwable $e) {
         $lowStocks = collect([]);
-        $lowStockUnder15 = collect([]);
         $lowStockCount = 0;
     }
 @endphp
 
+{{-- Alpine.js untuk animasi & timer toast (aman bila sudah dimuat—baris ini tetap boleh ada) --}}
+<script src="https://unpkg.com/alpinejs" defer></script>
+<style>[x-cloak]{ display:none !important; }</style>
+
 <x-app-layout>
     <x-slot name="header">
-        <h2 class="font-semibold text-2xl text-gray-800 leading-tight">Dashboard</h2>
+        <h2 class="font-semibold text-2xl text-gray-800 leading-tight">Dashboard </h2>
     </x-slot>
 
     <div class="py-6 px-4 md:px-10">
@@ -102,102 +105,35 @@
     {{-- Chart.js --}}
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>
-        (function () {
-            const ctx = document.getElementById('grafikOmzet').getContext('2d');
-            new Chart(ctx, {
-                type: 'line',
-                data: {
-                    labels: {!! json_encode($labels) !!},
-                    datasets: [{
-                        label: 'Omzet (Rp)',
-                        data: {!! json_encode($dataOmzet) !!},
-                        borderColor: '#3b82f6',
-                        backgroundColor: 'rgba(59,130,246,0.1)',
-                        tension: 0.4,
-                        pointRadius: 5,
-                        pointBackgroundColor: '#3b82f6',
-                        fill: true
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    plugins: { legend: { display: false } },
-                    scales: {
-                        y: {
-                            beginAtZero: true,
-                            ticks: { callback: v => 'Rp ' + v.toLocaleString('id-ID') }
-                        }
+        const ctx = document.getElementById('grafikOmzet').getContext('2d');
+        new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: {!! json_encode($labels) !!},
+                datasets: [{
+                    label: 'Omzet (Rp)',
+                    data: {!! json_encode($dataOmzet) !!},
+                    borderColor: '#3b82f6',
+                    backgroundColor: 'rgba(59,130,246,0.1)',
+                    tension: 0.4,
+                    pointRadius: 5,
+                    pointBackgroundColor: '#3b82f6',
+                    fill: true
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: { legend: { display: false }},
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: { callback: v => 'Rp ' + v.toLocaleString('id-ID') }
                     }
                 }
-            });
-        })();
-    </script>
-
-    {{-- ===== TOAST LOW STOCK: pure JS, muncul 10 detik ===== --}}
-    <div id="lowstock-toast"
-         class="fixed top-16 right-5 z-[1000] w-96 max-w-[95vw] bg-white border border-gray-200 rounded-xl shadow-lg overflow-hidden hidden">
-        <div class="px-4 py-3 border-b border-gray-100 flex items-center justify-between">
-            <div class="font-semibold text-gray-800">Notifikasi Stok Rendah</div>
-            <button id="lowstock-close" class="text-gray-500 hover:text-gray-700" title="Tutup">✕</button>
-        </div>
-        <div class="px-4 py-3">
-            @if($lowStockCount > 0)
-                <div class="text-sm text-gray-700 mb-2">
-                    {{ $lowStockCount }} produk stok &lt; 15. Beberapa di antaranya:
-                </div>
-                <ul class="text-sm text-gray-700 space-y-1 max-h-44 overflow-auto">
-                    @foreach($lowStockUnder15 as $p)
-                        <li class="flex justify-between">
-                            <span>{{ $p->name }}</span>
-                            <span class="ml-2 text-xs px-2 py-0.5 rounded-full
-                                @if($p->stock <= 0) bg-red-600 text-white
-                                @elseif($p->stock < 5) bg-red-100 text-red-700
-                                @else bg-yellow-100 text-yellow-700 @endif">
-                                Stok: {{ $p->stock }}
-                            </span>
-                        </li>
-                    @endforeach
-                </ul>
-            @else
-                <div class="text-sm text-gray-700">
-                    Semua aman 🎉 — tidak ada stok &lt; 15.
-                </div>
-            @endif
-
-            <div class="mt-3 text-[11px] text-gray-500">
-                Notifikasi ini akan tertutup otomatis dalam 10 detik.
-            </div>
-        </div>
-    </div>
-
-    <script>
-        (function () {
-            const toast = document.getElementById('lowstock-toast');
-            const closeBtn = document.getElementById('lowstock-close');
-
-            // Tampilkan (pastikan terlihat meski Tailwind belum load penuh)
-            toast.classList.remove('hidden');
-            toast.style.opacity = '0';
-            toast.style.transform = 'translateY(-8px)';
-            toast.style.transition = 'opacity .25s ease, transform .25s ease';
-
-            requestAnimationFrame(() => {
-                toast.style.opacity = '1';
-                toast.style.transform = 'translateY(0)';
-            });
-
-            // Auto close 10 detik
-            const timer = setTimeout(hide, 10000);
-
-            // Close manual
-            closeBtn.addEventListener('click', hide);
-
-            function hide() {
-                clearTimeout(timer);
-                toast.style.opacity = '0';
-                toast.style.transform = 'translateY(-8px)';
-                setTimeout(() => { toast.remove(); }, 250);
             }
-        })();
+        });
     </script>
+
+    {{-- TOAST LOW-STOCK: muncul 10 detik di kanan atas --}}
+    @include('partials.lowstock-toast', ['lowStocks' => $lowStocks, 'lowStockCount' => $lowStockCount])
 </x-app-layout>
