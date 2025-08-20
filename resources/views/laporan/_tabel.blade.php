@@ -26,6 +26,10 @@
       <th class="px-3 py-2 text-left">ID</th>
       <th class="px-3 py-2 text-left">User</th>
       <th class="px-3 py-2 text-center">Metode</th>
+
+      <th class="px-3 py-2 text-right">Harga Sebelum</th> {{-- NEW --}}
+      <th class="px-3 py-2 text-right">Profit</th>        {{-- NEW --}}
+
       <th class="px-3 py-2 text-right">Total</th>
       <th class="px-3 py-2 text-right">Dibayar</th>
       <th class="px-3 py-2 text-right">Kembalian</th>
@@ -34,12 +38,20 @@
   </thead>
   <tbody>
     @php($gTotal = 0)
+    @php($gModal = 0)   {{-- NEW --}}
+    @php($gProfit = 0)  {{-- NEW --}}
     @forelse($data as $row)
-      @php($gTotal += (int)($row->total ?? 0))
+      @php($gTotal  += (int)($row->total ?? 0))
+      @php($gModal  += (int)($row->total_modal ?? 0))
+      @php($gProfit += (int)($row->total_profit ?? 0))
       <tr class="border-t">
         <td class="px-3 py-2">{{ $row->id_Transaction }}</td>
         <td class="px-3 py-2">{{ $row->user->name ?? '-' }}</td>
         <td class="px-3 py-2 text-center">{{ $row->paymentMethod->name_payment ?? '-' }}</td>
+
+        <td class="px-3 py-2 text-right">Rp {{ number_format($row->total_modal ?? 0,0,',','.') }}</td>
+        <td class="px-3 py-2 text-right">Rp {{ number_format($row->total_profit ?? 0,0,',','.') }}</td>
+
         <td class="px-3 py-2 text-right">Rp {{ number_format($row->total,0,',','.') }}</td>
         <td class="px-3 py-2 text-right">Rp {{ number_format($row->paid,0,',','.') }}</td>
         <td class="px-3 py-2 text-right">Rp {{ number_format($row->change,0,',','.') }}</td>
@@ -49,14 +61,16 @@
       </tr>
     @empty
       <tr>
-        <td colspan="7" class="px-3 py-6 text-center text-gray-500">Tidak ada data.</td>
+        <td colspan="9" class="px-3 py-6 text-center text-gray-500">Tidak ada data.</td>
       </tr>
     @endforelse
   </tbody>
   <tfoot>
     <tr class="border-t font-semibold bg-gray-50">
-      <td colspan="3" class="px-3 py-2 text-right">Grand Total Omzet</td>
-      <td class="px-3 py-2 text-right">Rp {{ number_format($gTotal,0,',','.') }}</td>
+      <td colspan="3" class="px-3 py-2 text-right">Grand Total</td>
+      <td class="px-3 py-2 text-right">Rp {{ number_format($gModal,0,',','.') }}</td>   {{-- Harga Sebelum --}}
+      <td class="px-3 py-2 text-right">Rp {{ number_format($gProfit,0,',','.') }}</td>  {{-- Profit --}}
+      <td class="px-3 py-2 text-right">Rp {{ number_format($gTotal,0,',','.') }}</td>   {{-- Omzet --}}
       <td colspan="3"></td>
     </tr>
   </tfoot>

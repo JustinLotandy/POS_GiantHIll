@@ -37,7 +37,28 @@ class ReportController extends Controller
         return [$startLocal, $endLocal];
     }
 
-    /** Hitung omzet, profit, jumlah transaksi. */
+    /** Tempelkan total_modal & total_profit ke setiap transaksi (butuh eager-load items.product) */
+    private function attachPerTxnMetrics($transactions): void
+    {
+        foreach ($transactions as $trx) {
+            $totalModal  = 0; // SUM(harga_sebelum * qty)
+            $totalProfit = 0; // SUM((price_jual - harga_sebelum) * qty)
+
+            foreach ($trx->items ?? [] as $it) {
+                $qty   = (int) ($it->quantity ?? 0);
+                $jual  = (int) ($it->price ?? 0); // harga saat transaksi (bukan dari product)
+                $modal = (int) optional($it->product)->harga_sebelum;
+
+                $totalModal  += $modal * $qty;
+                $totalProfit += max(0, $jual - $modal) * $qty;
+            }
+
+            $trx->setAttribute('total_modal',  $totalModal);
+            $trx->setAttribute('total_profit', $totalProfit);
+        }
+    }
+
+    /** Hitung ringkasan global (omzet, profit, jumlah transaksi) */
     private function computeSummary($transactions): array
     {
         $omzet = 0;
@@ -47,13 +68,8 @@ class ReportController extends Controller
         foreach ($transactions as $trx) {
             $omzet += (int) ($trx->total ?? 0);
 
-            // items harus sudah eager-loaded
-            foreach ($trx->items ?? [] as $it) {
-                $qty   = (int) ($it->quantity ?? 0);
-                $jual  = (int) ($it->price ?? 0); // harga saat transaksi
-                $modal = (int) optional($it->product)->harga_sebelum; // modal dari product, fallback 0
-                $profit += max(0, $jual - $modal) * $qty;
-            }
+            // Pakai metrik yang sudah ditempel agar konsisten
+            $profit += (int) ($trx->total_profit ?? 0);
         }
 
         return [
@@ -76,9 +92,9 @@ class ReportController extends Controller
 
         $transaksi = Transaction::with(['user','paymentMethod','items.product'])
             ->whereBetween('created_at', [$startQ, $endQ])
-            ->orderBy('created_at')
-            ->get();
+            ->orderBy('created_at')->get();
 
+        $this->attachPerTxnMetrics($transaksi);
         $summary = $this->computeSummary($transaksi);
 
         $pdf = PDF::loadView('laporan.template', [
@@ -110,9 +126,9 @@ class ReportController extends Controller
 
         $transaksi = Transaction::with(['user','paymentMethod','items.product'])
             ->whereBetween('created_at', [$startQ, $endQ])
-            ->orderBy('created_at')
-            ->get();
+            ->orderBy('created_at')->get();
 
+        $this->attachPerTxnMetrics($transaksi);
         $summary = $this->computeSummary($transaksi);
         $periode = $start->format('Y-m-d') . ' s/d ' . $end->format('Y-m-d');
 
@@ -138,9 +154,9 @@ class ReportController extends Controller
 
         $transaksi = Transaction::with(['user','paymentMethod','items.product'])
             ->whereBetween('created_at', [$startQ, $endQ])
-            ->orderBy('created_at')
-            ->get();
+            ->orderBy('created_at')->get();
 
+        $this->attachPerTxnMetrics($transaksi);
         $summary = $this->computeSummary($transaksi);
 
         $pdf = PDF::loadView('laporan.template', [
@@ -164,9 +180,9 @@ class ReportController extends Controller
 
         $transaksi = Transaction::with(['user','paymentMethod','items.product'])
             ->whereBetween('created_at', [$startQ, $endQ])
-            ->orderBy('created_at')
-            ->get();
+            ->orderBy('created_at')->get();
 
+        $this->attachPerTxnMetrics($transaksi);
         $summary = $this->computeSummary($transaksi);
 
         $pdf = PDF::loadView('laporan.template', [
@@ -193,6 +209,7 @@ class ReportController extends Controller
                 ->whereBetween('created_at', [$startQ, $endQ])
                 ->latest()->get();
 
+            $this->attachPerTxnMetrics($data);
             $summary = $this->computeSummary($data);
 
             return view('laporan._tabel', compact('data','summary'));
@@ -219,6 +236,7 @@ class ReportController extends Controller
                 ->whereBetween('created_at', [$startQ, $endQ])
                 ->latest()->get();
 
+            $this->attachPerTxnMetrics($data);
             $summary = $this->computeSummary($data);
 
             return view('laporan._tabel', compact('data','summary'));
@@ -239,6 +257,7 @@ class ReportController extends Controller
                 ->whereBetween('created_at', [$startQ, $endQ])
                 ->latest()->get();
 
+            $this->attachPerTxnMetrics($data);
             $summary = $this->computeSummary($data);
 
             return view('laporan._tabel', compact('data','summary'));
@@ -259,6 +278,7 @@ class ReportController extends Controller
                 ->whereBetween('created_at', [$startQ, $endQ])
                 ->latest()->get();
 
+            $this->attachPerTxnMetrics($data);
             $summary = $this->computeSummary($data);
 
             return view('laporan._tabel', compact('data','summary'));
