@@ -1,13 +1,3 @@
-{{-- Alpine (pakai CDN jika belum dimuat di layout utama) --}}
-<script src="https://unpkg.com/alpinejs" defer></script>
-<style>[x-cloak]{display:none !important}</style>
-<script>
-  document.addEventListener('alpine:init', () => {
-    // store global untuk memunculkan toast saat hover bell
-    Alpine.store('toast', { hover: false });
-  });
-</script>
-
 <nav x-data="{ open: false }" class="bg-white dark:bg-gray-800 border-b border-gray-100 dark:border-gray-700">
   <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
     <div class="flex justify-between h-16">
@@ -19,38 +9,37 @@
         </div>
 
         <div class="hidden space-x-8 sm:-my-px sm:ms-10 sm:flex">
-          @can('dashboard.lihat')<x-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')">Dashboard</x-nav-link>@endcan
-          @can('pos.transaksi')<x-nav-link :href="route('pos.index')" :active="request()->routeIs('pos.*')">POS</x-nav-link>@endcan
-          @can('products.lihat')<x-nav-link :href="route('products.index')" :active="request()->routeIs('products.*')">Produk</x-nav-link>@endcan
-          @can('categories.lihat')<x-nav-link :href="route('categories.index')" :active="request()->routeIs('categories.*')">Kategori</x-nav-link>@endcan
-          @can('payment_methods.lihat')<x-nav-link :href="route('payment_methods.index')" :active="request()->routeIs('payment_methods.*')">Payment Method</x-nav-link>@endcan
-          @can('transactions.lihat')<x-nav-link :href="route('transactions.index')" :active="request()->routeIs('transactions.*')">Daftar Transaksi</x-nav-link>@endcan
-          @can('users.lihat')<x-nav-link :href="route('users.index')" :active="request()->routeIs('users.*')">Pengguna</x-nav-link>@endcan
-          @canany(['laporan.harian','laporan.mingguan','laporan.bulanan'])<x-nav-link :href="route('laporan.index')" :active="request()->routeIs('laporan.*')">Laporan</x-nav-link>@endcanany
-          @can('roles.lihat')<x-nav-link :href="route('roles.index')" :active="request()->routeIs('roles.*')">Roles</x-nav-link>@endcan
+          @can('dashboard.lihat')
+            <x-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')">Dashboard</x-nav-link>
+          @endcan
+          @can('pos.transaksi')
+            <x-nav-link :href="route('pos.index')" :active="request()->routeIs('pos.*')">POS</x-nav-link>
+          @endcan
+          @can('products.lihat')
+            <x-nav-link :href="route('products.index')" :active="request()->routeIs('products.*')">Produk</x-nav-link>
+          @endcan
+          @can('categories.lihat')
+            <x-nav-link :href="route('categories.index')" :active="request()->routeIs('categories.*')">Kategori</x-nav-link>
+          @endcan
+          @can('payment_methods.lihat')
+            <x-nav-link :href="route('payment_methods.index')" :active="request()->routeIs('payment_methods.*')">Payment Method</x-nav-link>
+          @endcan
+          @can('transactions.lihat')
+            <x-nav-link :href="route('transactions.index')" :active="request()->routeIs('transactions.*')">Daftar Transaksi</x-nav-link>
+          @endcan
+          @can('users.lihat')
+            <x-nav-link :href="route('users.index')" :active="request()->routeIs('users.*')">Pengguna</x-nav-link>
+          @endcan
+          @canany(['laporan.harian','laporan.mingguan','laporan.bulanan'])
+            <x-nav-link :href="route('laporan.index')" :active="request()->routeIs('laporan.*')">Laporan</x-nav-link>
+          @endcanany
+          @can('roles.lihat')
+            <x-nav-link :href="route('roles.index')" :active="request()->routeIs('roles.*')">Roles</x-nav-link>
+          @endcan
         </div>
       </div>
 
       <div class="flex items-center">
-        {{-- ===== Bell: hover untuk munculkan toast ===== --}}
-        @php $count = $lowStockCount ?? 0; $has = $count > 0; @endphp
-        <div class="hidden sm:flex sm:items-center sm:ms-6 relative">
-          <button type="button"
-                  @mouseenter="$store['toast'].hover = true"
-                  @mouseleave="$store['toast'].hover = false"
-                  class="relative inline-flex items-center px-3 py-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 focus:outline-none"
-                  aria-label="Notifikasi stok rendah">
-            <span class="{{ $has ? 'text-red-600' : 'text-gray-600 dark:text-gray-300' }} relative">
-              <span class="text-lg"></span>
-              @if($has)
-                <span class="absolute -top-1 -right-1 bg-red-600 text-white text-[11px] leading-none rounded-full px-1.5 min-w-[18px] text-center ring-2 ring-white dark:ring-gray-800">{{ $count }}</span>
-              @else
-                <span class="absolute -top-0.5 -right-0.5 w-2 h-2 bg-gray-300 rounded-full ring-2 ring-white dark:ring-gray-800"></span>
-              @endif
-            </span>
-          </button>
-        </div>
-
         {{-- Settings (login) --}}
         @auth
         <div class="hidden sm:flex sm:items-center sm:ms-6">
@@ -58,12 +47,18 @@
             <x-slot name="trigger">
               <button class="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-gray-500 dark:text-gray-400 bg-white dark:bg-gray-800 hover:text-gray-700 dark:hover:text-gray-300 focus:outline-none">
                 <div>{{ Auth::user()->name }}</div>
-                <div class="ms-1"><svg class="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" /></svg></div>
+                <div class="ms-1">
+                  <svg class="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
+                  </svg>
+                </div>
               </button>
             </x-slot>
+
             <x-slot name="content">
               <x-dropdown-link :href="route('profile.edit')">Profile</x-dropdown-link>
-              <form method="POST" action="{{ route('logout') }}">@csrf
+              <form method="POST" action="{{ route('logout') }}">
+                @csrf
                 <x-dropdown-link :href="route('logout')" onclick="event.preventDefault(); this.closest('form').submit();">Log Out</x-dropdown-link>
               </form>
             </x-slot>
@@ -84,5 +79,5 @@
     </div>
   </div>
 
-  {{-- menu responsive… (biarkan seperti punyamu) --}}
+  {{-- menu responsive tetap biarkan seperti punyamu --}}
 </nav>
