@@ -5,15 +5,23 @@
     <style>
         body { font-family: Arial, sans-serif; font-size: 12px; }
         h2 { text-align: center; margin-bottom: 10px; }
-        table { width: 100%; border-collapse: collapse; margin-top: 16px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 12px; }
         th, td { border: 1px solid #333; padding: 6px 4px; text-align: left; }
         th { background: #eee; }
         .right { text-align: right; }
+        .summary { margin-top: 8px; display: table; width: 100%; }
+        .box { display: table-cell; padding: 8px; border: 1px solid #333; }
     </style>
 </head>
 <body>
     <h2>{{ $title }}</h2>
     <div>Periode: <b>{{ $periode }}</b></div>
+
+    <div class="summary">
+        <div class="box"><b>Omzet</b><br>Rp {{ number_format($summary['omzet'] ?? 0,0,',','.') }}</div>
+        <div class="box"><b>Profit</b><br>Rp {{ number_format($summary['profit'] ?? 0,0,',','.') }}</div>
+        <div class="box"><b>Jumlah Transaksi</b><br>{{ number_format($summary['count'] ?? 0) }}</div>
+    </div>
 
     <table>
         <thead>
@@ -29,7 +37,9 @@
             </tr>
         </thead>
         <tbody>
+            @php($gTotal = 0)
             @forelse($transaksi as $no => $trx)
+                @php($gTotal += (int)($trx->total ?? 0))
                 <tr>
                     <td>{{ $no + 1 }}</td>
                     <td>{{ $trx->id_Transaction }}</td>
@@ -44,6 +54,13 @@
                 <tr><td colspan="8" style="text-align:center">Tidak ada data transaksi</td></tr>
             @endforelse
         </tbody>
+        <tfoot>
+            <tr>
+                <th colspan="4" class="right">Grand Total Omzet</th>
+                <th class="right">Rp {{ number_format($gTotal,0,',','.') }}</th>
+                <th colspan="3"></th>
+            </tr>
+        </tfoot>
     </table>
 </body>
 </html>

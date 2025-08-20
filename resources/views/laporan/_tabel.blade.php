@@ -1,3 +1,25 @@
+{{-- Ringkasan --}}
+<div class="grid grid-cols-1 md:grid-cols-3 gap-3 p-4">
+  <div class="rounded-xl border bg-white p-4">
+    <div class="text-xs text-gray-500">Omzet</div>
+    <div class="text-2xl font-bold text-blue-600">
+      Rp {{ number_format($summary['omzet'] ?? 0, 0, ',', '.') }}
+    </div>
+  </div>
+  <div class="rounded-xl border bg-white p-4">
+    <div class="text-xs text-gray-500">Profit</div>
+    <div class="text-2xl font-bold text-green-600">
+      Rp {{ number_format($summary['profit'] ?? 0, 0, ',', '.') }}
+    </div>
+  </div>
+  <div class="rounded-xl border bg-white p-4">
+    <div class="text-xs text-gray-500">Jumlah Transaksi</div>
+    <div class="text-2xl font-bold">
+      {{ number_format($summary['count'] ?? 0) }}
+    </div>
+  </div>
+</div>
+
 <table class="min-w-full text-sm">
   <thead class="bg-gray-50">
     <tr>
@@ -33,7 +55,7 @@
   </tbody>
   <tfoot>
     <tr class="border-t font-semibold bg-gray-50">
-      <td colspan="3" class="px-3 py-2 text-right">Grand Total</td>
+      <td colspan="3" class="px-3 py-2 text-right">Grand Total Omzet</td>
       <td class="px-3 py-2 text-right">Rp {{ number_format($gTotal,0,',','.') }}</td>
       <td colspan="3"></td>
     </tr>

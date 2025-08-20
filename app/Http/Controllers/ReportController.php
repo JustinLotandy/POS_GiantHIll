@@ -11,12 +11,10 @@ class ReportController extends Controller
 {
     public function __construct()
     {
-        // Halaman & cetak dijaga permission
         $this->middleware('permission:laporan.harian')->only(['index','harian']);
         $this->middleware('permission:laporan.mingguan')->only('mingguan');
         $this->middleware('permission:laporan.bulanan')->only('bulanan');
         $this->middleware('permission:laporan.tahunan')->only('tahunan');
-        // Preview TIDAK diproteksi permission agar gampang dites (tetap lewat auth dari group)
     }
 
     public function index()
@@ -24,14 +22,13 @@ class ReportController extends Controller
         return view('laporan.index');
     }
 
-    // ===== Helpers =====
+    /** Toggle UTC dari .env: REPORT_USE_UTC=true|false (default false) */
     private function useUtc(): bool
     {
-        // .env: REPORT_USE_UTC=true|false  (default: false)
         return filter_var(config('app.report_use_utc', env('REPORT_USE_UTC', false)), FILTER_VALIDATE_BOOLEAN);
     }
 
-    /** Kembalikan [start, end] untuk whereBetween sesuai mode (UTC / lokal) */
+    /** Range untuk whereBetween sesuai mode (UTC / lokal) */
     private function rangeForQuery(Carbon $startLocal, Carbon $endLocal): array
     {
         if ($this->useUtc()) {
@@ -40,7 +37,34 @@ class ReportController extends Controller
         return [$startLocal, $endLocal];
     }
 
-    // ===== CETAK PDF =====
+    /** Hitung omzet, profit, jumlah transaksi. */
+    private function computeSummary($transactions): array
+    {
+        $omzet = 0;
+        $profit = 0;
+        $count = $transactions->count();
+
+        foreach ($transactions as $trx) {
+            $omzet += (int) ($trx->total ?? 0);
+
+            // items harus sudah eager-loaded
+            foreach ($trx->items ?? [] as $it) {
+                $qty   = (int) ($it->quantity ?? 0);
+                $jual  = (int) ($it->price ?? 0); // harga saat transaksi
+                $modal = (int) optional($it->product)->harga_sebelum; // modal dari product, fallback 0
+                $profit += max(0, $jual - $modal) * $qty;
+            }
+        }
+
+        return [
+            'omzet'  => $omzet,
+            'profit' => $profit,
+            'count'  => $count,
+        ];
+    }
+
+    // ================== CETAK PDF ==================
+
     public function harian(Request $request)
     {
         $tz = 'Asia/Jakarta';
@@ -50,15 +74,18 @@ class ReportController extends Controller
         $end   = Carbon::parse($tanggal, $tz)->endOfDay();
         [$startQ, $endQ] = $this->rangeForQuery($start, $end);
 
-        $transaksi = Transaction::with(['user','paymentMethod'])
+        $transaksi = Transaction::with(['user','paymentMethod','items.product'])
             ->whereBetween('created_at', [$startQ, $endQ])
             ->orderBy('created_at')
             ->get();
+
+        $summary = $this->computeSummary($transaksi);
 
         $pdf = PDF::loadView('laporan.template', [
             'title'     => 'Laporan Harian',
             'periode'   => $tanggal,
             'transaksi' => $transaksi,
+            'summary'   => $summary,
         ])->setPaper('a4', 'portrait');
 
         return $pdf->download("laporan-harian-{$tanggal}.pdf");
@@ -81,17 +108,19 @@ class ReportController extends Controller
 
         [$startQ, $endQ] = $this->rangeForQuery($start, $end);
 
-        $transaksi = Transaction::with(['user','paymentMethod'])
+        $transaksi = Transaction::with(['user','paymentMethod','items.product'])
             ->whereBetween('created_at', [$startQ, $endQ])
             ->orderBy('created_at')
             ->get();
 
+        $summary = $this->computeSummary($transaksi);
         $periode = $start->format('Y-m-d') . ' s/d ' . $end->format('Y-m-d');
 
         $pdf = PDF::loadView('laporan.template', [
             'title'     => 'Laporan Mingguan',
             'periode'   => $periode,
             'transaksi' => $transaksi,
+            'summary'   => $summary,
         ])->setPaper('a4', 'portrait');
 
         return $pdf->download('laporan-mingguan-'.$start->format('Y-m-d').'.pdf');
@@ -107,15 +136,18 @@ class ReportController extends Controller
         $end   = $start->copy()->endOfMonth();
         [$startQ, $endQ] = $this->rangeForQuery($start, $end);
 
-        $transaksi = Transaction::with(['user','paymentMethod'])
+        $transaksi = Transaction::with(['user','paymentMethod','items.product'])
             ->whereBetween('created_at', [$startQ, $endQ])
             ->orderBy('created_at')
             ->get();
+
+        $summary = $this->computeSummary($transaksi);
 
         $pdf = PDF::loadView('laporan.template', [
             'title'     => 'Laporan Bulanan',
             'periode'   => $bulan,
             'transaksi' => $transaksi,
+            'summary'   => $summary,
         ])->setPaper('a4', 'portrait');
 
         return $pdf->download("laporan-bulanan-{$bulan}.pdf");
@@ -130,21 +162,25 @@ class ReportController extends Controller
         $end   = Carbon::create($tahun,12,31,23,59,59,$tz)->endOfDay();
         [$startQ, $endQ] = $this->rangeForQuery($start, $end);
 
-        $transaksi = Transaction::with(['user','paymentMethod'])
+        $transaksi = Transaction::with(['user','paymentMethod','items.product'])
             ->whereBetween('created_at', [$startQ, $endQ])
             ->orderBy('created_at')
             ->get();
+
+        $summary = $this->computeSummary($transaksi);
 
         $pdf = PDF::loadView('laporan.template', [
             'title'     => 'Laporan Tahunan',
             'periode'   => (string)$tahun,
             'transaksi' => $transaksi,
+            'summary'   => $summary,
         ])->setPaper('a4', 'portrait');
 
         return $pdf->download("laporan-tahunan-{$tahun}.pdf");
     }
 
-    // ===== PREVIEW (HTML tabel) =====
+    // ================== PREVIEW (HTML tabel) ==================
+
     public function previewHarian(Request $r){
         try {
             $tz = 'Asia/Jakarta';
@@ -153,18 +189,14 @@ class ReportController extends Controller
             $end   = Carbon::parse($tgl, $tz)->endOfDay();
             [$startQ, $endQ] = $this->rangeForQuery($start, $end);
 
-            $data = Transaction::with(['user','paymentMethod'])
+            $data = Transaction::with(['user','paymentMethod','items.product'])
                 ->whereBetween('created_at', [$startQ, $endQ])
                 ->latest()->get();
 
-            if (!view()->exists('laporan._tabel')) {
-                return response('<div class="p-6 text-red-600">View <b>laporan._tabel</b> tidak ditemukan.</div>', 500);
-            }
+            $summary = $this->computeSummary($data);
 
-            \Log::info('previewHarian', ['tanggal'=>$tgl, 'count'=>$data->count()]);
-            return view('laporan._tabel', compact('data'));
+            return view('laporan._tabel', compact('data','summary'));
         } catch (\Throwable $e) {
-            \Log::error('previewHarian error', ['msg'=>$e->getMessage()]);
             return response('<div class="p-6 text-red-600">Error: '.e($e->getMessage()).'</div>', 500);
         }
     }
@@ -183,18 +215,14 @@ class ReportController extends Controller
             }
             [$startQ, $endQ] = $this->rangeForQuery($start, $end);
 
-            $data = Transaction::with(['user','paymentMethod'])
+            $data = Transaction::with(['user','paymentMethod','items.product'])
                 ->whereBetween('created_at', [$startQ, $endQ])
                 ->latest()->get();
 
-            if (!view()->exists('laporan._tabel')) {
-                return response('<div class="p-6 text-red-600">View <b>laporan._tabel</b> tidak ditemukan.</div>', 500);
-            }
+            $summary = $this->computeSummary($data);
 
-            \Log::info('previewMingguan', ['minggu'=>$week, 'count'=>$data->count()]);
-            return view('laporan._tabel', compact('data'));
+            return view('laporan._tabel', compact('data','summary'));
         } catch (\Throwable $e) {
-            \Log::error('previewMingguan error', ['msg'=>$e->getMessage()]);
             return response('<div class="p-6 text-red-600">Error: '.e($e->getMessage()).'</div>', 500);
         }
     }
@@ -207,18 +235,14 @@ class ReportController extends Controller
             $end   = $start->copy()->endOfMonth();
             [$startQ, $endQ] = $this->rangeForQuery($start, $end);
 
-            $data = Transaction::with(['user','paymentMethod'])
+            $data = Transaction::with(['user','paymentMethod','items.product'])
                 ->whereBetween('created_at', [$startQ, $endQ])
                 ->latest()->get();
 
-            if (!view()->exists('laporan._tabel')) {
-                return response('<div class="p-6 text-red-600">View <b>laporan._tabel</b> tidak ditemukan.</div>', 500);
-            }
+            $summary = $this->computeSummary($data);
 
-            \Log::info('previewBulanan', ['bulan'=>"$y-$m", 'count'=>$data->count()]);
-            return view('laporan._tabel', compact('data'));
+            return view('laporan._tabel', compact('data','summary'));
         } catch (\Throwable $e) {
-            \Log::error('previewBulanan error', ['msg'=>$e->getMessage()]);
             return response('<div class="p-6 text-red-600">Error: '.e($e->getMessage()).'</div>', 500);
         }
     }
@@ -231,18 +255,14 @@ class ReportController extends Controller
             $end   = Carbon::create($y,12,31,23,59,59,$tz)->endOfDay();
             [$startQ, $endQ] = $this->rangeForQuery($start, $end);
 
-            $data = Transaction::with(['user','paymentMethod'])
+            $data = Transaction::with(['user','paymentMethod','items.product'])
                 ->whereBetween('created_at', [$startQ, $endQ])
                 ->latest()->get();
 
-            if (!view()->exists('laporan._tabel')) {
-                return response('<div class="p-6 text-red-600">View <b>laporan._tabel</b> tidak ditemukan.</div>', 500);
-            }
+            $summary = $this->computeSummary($data);
 
-            \Log::info('previewTahunan', ['tahun'=>$y, 'count'=>$data->count()]);
-            return view('laporan._tabel', compact('data'));
+            return view('laporan._tabel', compact('data','summary'));
         } catch (\Throwable $e) {
-            \Log::error('previewTahunan error', ['msg'=>$e->getMessage()]);
             return response('<div class="p-6 text-red-600">Error: '.e($e->getMessage()).'</div>', 500);
         }
     }
