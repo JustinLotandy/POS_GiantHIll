@@ -111,13 +111,19 @@
                             x-show="$store.notif.open"
                             x-transition.opacity
                             @click.outside="$store.notif.open=false"
+                            @click.window="
+                                // Tutup jika klik bukan tombol bell
+                                if(!$event.target.closest('[data-bell]')){
+                                    $store.notif.open=false
+                                }
+                            "
                             @keydown.escape.window="$store.notif.open=false"
                             @posisi-notif.window="
                                 const btn = document.querySelector('[data-bell]');
                                 if (!btn) return;
                                 const r = btn.getBoundingClientRect();
-                                left = r.right - 320; // 320px = w-80
-                                top  = r.bottom + 8;  // jarak vertikal
+                                left = r.right - 320;
+                                top  = r.bottom + 8;
                                 if (left < 8) left = 8;
                             "
                             x-init="
@@ -131,40 +137,10 @@
                             role="dialog"
                             aria-label="Daftar notifikasi stok"
                         >
-                            <div class="text-sm font-semibold text-gray-800 dark:text-gray-200 mb-2">
-                                Stok Rendah (&lt; 15)
-                            </div>
-
-                            @if(($lowStockCount ?? 0) === 0)
-                                <div class="text-sm text-gray-500 dark:text-gray-400">Semua aman 🎉</div>
-                            @else
-                                <ul class="max-h-64 overflow-auto divide-y divide-gray-100 dark:divide-gray-700">
-                                    @foreach(($lowStocks ?? []) as $p)
-                                        <li class="py-2 flex items-center justify-between">
-                                            <div class="text-sm text-gray-700 dark:text-gray-300">
-                                                {{ is_object($p) ? $p->name : '-' }}
-                                            </div>
-                                            <span class="text-xs px-2 py-0.5 rounded-full
-                                                @if(is_object($p) && $p->stock <= 0) bg-red-600 text-white
-                                                @elseif(is_object($p) && $p->stock < 5) bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300
-                                                @else bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-300 @endif">
-                                                Stok: {{ is_object($p) ? $p->stock : '-' }}
-                                            </span>
-                                        </li>
-                                    @endforeach
-                                </ul>
-                                <div class="mt-2 text-[11px] text-gray-500 dark:text-gray-400">
-                                    Menampilkan hingga 10 produk stok terendah.
-                                </div>
-                            @endif
-
-                            <div class="mt-3 text-right">
-                                <button @click="$store.notif.open=false" class="text-sm px-3 py-1 border rounded hover:bg-gray-50 dark:hover:bg-gray-700">
-                                    Tutup
-                                </button>
-                            </div>
+                            {{-- isi notifikasi --}}
                         </div>
                     </template>
+
                 </div>
 
                 {{-- ===== Settings Dropdown: hanya saat login ===== --}}
