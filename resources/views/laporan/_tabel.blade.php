@@ -27,8 +27,8 @@
       <th class="px-3 py-2 text-left">User</th>
       <th class="px-3 py-2 text-center">Metode</th>
 
-      <th class="px-3 py-2 text-right">Harga Sebelum</th> {{-- NEW --}}
-      <th class="px-3 py-2 text-right">Profit</th>        {{-- NEW --}}
+      <th class="px-3 py-2 text-left">Produk</th>            {{-- NEW --}}
+      <th class="px-3 py-2 text-right">Profit</th>           {{-- tetap --}}
 
       <th class="px-3 py-2 text-right">Total</th>
       <th class="px-3 py-2 text-right">Dibayar</th>
@@ -38,18 +38,18 @@
   </thead>
   <tbody>
     @php($gTotal = 0)
-    @php($gModal = 0)   {{-- NEW --}}
-    @php($gProfit = 0)  {{-- NEW --}}
+    @php($gProfit = 0)
     @forelse($data as $row)
       @php($gTotal  += (int)($row->total ?? 0))
-      @php($gModal  += (int)($row->total_modal ?? 0))
       @php($gProfit += (int)($row->total_profit ?? 0))
-      <tr class="border-t">
+      <tr class="border-t align-top">
         <td class="px-3 py-2">{{ $row->id_Transaction }}</td>
         <td class="px-3 py-2">{{ $row->user->name ?? '-' }}</td>
         <td class="px-3 py-2 text-center">{{ $row->paymentMethod->name_payment ?? '-' }}</td>
 
-        <td class="px-3 py-2 text-right">Rp {{ number_format($row->total_modal ?? 0,0,',','.') }}</td>
+        <td class="px-3 py-2">
+          {{ $row->products_label ?? '' }}
+        </td>
         <td class="px-3 py-2 text-right">Rp {{ number_format($row->total_profit ?? 0,0,',','.') }}</td>
 
         <td class="px-3 py-2 text-right">Rp {{ number_format($row->total,0,',','.') }}</td>
@@ -67,8 +67,7 @@
   </tbody>
   <tfoot>
     <tr class="border-t font-semibold bg-gray-50">
-      <td colspan="3" class="px-3 py-2 text-right">Grand Total</td>
-      <td class="px-3 py-2 text-right">Rp {{ number_format($gModal,0,',','.') }}</td>   {{-- Harga Sebelum --}}
+      <td colspan="4" class="px-3 py-2 text-right">Grand Total</td>
       <td class="px-3 py-2 text-right">Rp {{ number_format($gProfit,0,',','.') }}</td>  {{-- Profit --}}
       <td class="px-3 py-2 text-right">Rp {{ number_format($gTotal,0,',','.') }}</td>   {{-- Omzet --}}
       <td colspan="3"></td>

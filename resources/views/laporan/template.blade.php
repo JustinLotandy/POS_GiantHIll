@@ -6,7 +6,7 @@
         body { font-family: Arial, sans-serif; font-size: 12px; }
         h2 { text-align: center; margin-bottom: 10px; }
         table { width: 100%; border-collapse: collapse; margin-top: 12px; }
-        th, td { border: 1px solid #333; padding: 6px 4px; text-align: left; }
+        th, td { border: 1px solid #333; padding: 6px 4px; text-align: left; vertical-align: top; }
         th { background: #eee; }
         .right { text-align: right; }
         .summary { margin-top: 8px; display: table; width: 100%; }
@@ -30,28 +30,26 @@
                 <th>ID Transaksi</th>
                 <th>User</th>
                 <th>Metode</th>
-                <th>Harga Sebelum</th> {{-- NEW --}}
-                <th>Profit</th>        {{-- NEW --}}
-                <th>Total</th>
-                <th>Dibayar</th>
-                <th>Kembali</th>
+                <th>Produk</th>     {{-- NEW --}}
+                <th class="right">Profit</th>
+                <th class="right">Total</th>
+                <th class="right">Dibayar</th>
+                <th class="right">Kembali</th>
                 <th>Tanggal</th>
             </tr>
         </thead>
         <tbody>
             @php($gTotal = 0)
-            @php($gModal = 0)
             @php($gProfit = 0)
             @forelse($transaksi as $no => $trx)
                 @php($gTotal  += (int)($trx->total ?? 0))
-                @php($gModal  += (int)($trx->total_modal ?? 0))
                 @php($gProfit += (int)($trx->total_profit ?? 0))
                 <tr>
                     <td>{{ $no + 1 }}</td>
                     <td>{{ $trx->id_Transaction }}</td>
                     <td>{{ $trx->user->name ?? '-' }}</td>
                     <td>{{ $trx->paymentMethod->name_payment ?? '-' }}</td>
-                    <td class="right">Rp {{ number_format($trx->total_modal ?? 0,0,',','.') }}</td>
+                    <td>{{ $trx->products_label ?? '' }}</td>
                     <td class="right">Rp {{ number_format($trx->total_profit ?? 0,0,',','.') }}</td>
                     <td class="right">Rp {{ number_format($trx->total,0,',','.') }}</td>
                     <td class="right">Rp {{ number_format($trx->paid,0,',','.') }}</td>
@@ -64,7 +62,12 @@
         </tbody>
         <tfoot>
             <tr>
-                <th colspan="4" class="right">Grand Total</th>
-                <th class="right">Rp {{ number_format($gModal,0,',','.') }}</th>
-                <th class="right">Rp {{ number_format($gProfit,0,',','.') }}</th>
-                <th class="right">Rp {{ number_format($gTotal,0,',','.') }}</th_
+                <th colspan="5" class="right">Grand Total</th>
+                <th class="right">Rp {{ number_format($gProfit,0,',','.') }}</th>  {{-- Profit --}}
+                <th class="right">Rp {{ number_format($gTotal,0,',','.') }}</th>   {{-- Omzet --}}
+                <th colspan="3"></th>
+            </tr>
+        </tfoot>
+    </table>
+</body>
+</html>
