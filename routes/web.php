@@ -28,7 +28,7 @@ Route::middleware('auth')->group(function () {
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 
     // === Produk ===
-    Route::resource('products', ProductController::class)->middleware('permission:products.lihat');
+    Route::resource('products', ProductController::class)->except(['show'])->middleware('permission:products.lihat');
     Route::get('/products/pdf', [ProductController::class, 'exportPDF'])
      ->name('products.pdf')
      ->middleware('permission:products.lihat');
