@@ -49,16 +49,6 @@
                        value="{{ old('stock', $product->stock) }}" required>
             </div>
             <div>
-                <label class="block mb-1 font-semibold">Gambar Saat Ini</label><br>
-                @if($product->image)
-                    <img src="{{ asset('storage/' . $product->image) }}" class="w-20 h-20 rounded object-cover mb-2 border shadow" alt="Produk">
-                @else
-                    <span class="text-gray-500 italic">Tidak ada gambar</span><br>
-                @endif
-                <label class="block mb-1 font-semibold">Ubah Gambar (optional)</label>
-                <input type="file" name="image" class="w-full border border-gray-300 rounded px-3 py-2 mt-1">
-            </div>
-            <div>
                 <label class="block mb-1 font-semibold">Barcode (optional)</label>
                 <input type="text" name="barcode" class="w-full border border-gray-300 rounded px-3 py-2"
                     value="{{ old('barcode', $product->barcode) }}">

@@ -12,7 +12,7 @@
            + Tambah Produk
         </a>
 
-        <!-- ✅ Tambahan: Tombol Cetak PDF -->
+        <!-- Tombol Cetak PDF -->
         <a href="{{ route('products.pdf') }}"
            class="inline-block bg-red-600 text-white px-4 py-2 rounded shadow hover:bg-red-700 mb-4 transition ml-2">
            🖨️ Cetak PDF
@@ -28,7 +28,6 @@
                         <th class="px-4 py-3 font-bold text-gray-700 text-left">Harga Sebelum</th>
                         <th class="px-4 py-3 font-bold text-gray-700 text-left">Harga Sesudah</th>
                         <th class="px-4 py-3 font-bold text-gray-700 text-left">Stok</th>
-                        <th class="px-4 py-3 font-bold text-gray-700 text-left">Gambar</th>
                         <th class="px-4 py-3 font-bold text-gray-700 text-left">Barcode</th>
                         <th class="px-4 py-3 font-bold text-gray-700 text-left">Aksi</th>
                     </tr>
@@ -48,22 +47,19 @@
                             <td class="px-4 py-2">
                                 {{ $p->stock }}
 
-                                {{-- Tambahkan Label Stok --}}
+                                {{-- Label stok dinamis --}}
                                 @if($p->stock == 0)
-                                    <span class="ml-2 px-2 py-0.5 text-xs font-semibold bg-red-500 text-white rounded-full">
+                                    <span class="ml-2 px-2 py-0.5 text-xs font-semibold bg-red-700 text-white rounded-full">
                                         Habis
                                     </span>
-                                @elseif($p->stock <= 15)
+                                @elseif($p->stock < 10)
+                                    <span class="ml-2 px-2 py-0.5 text-xs font-semibold bg-red-500 text-white rounded-full">
+                                        Sangat Rendah
+                                    </span>
+                                @elseif($p->stock < 15)
                                     <span class="ml-2 px-2 py-0.5 text-xs font-semibold bg-yellow-400 text-black rounded-full">
                                         Low Stock
                                     </span>
-                                @endif
-                            </td>
-                            <td class="px-4 py-2">
-                                @if($p->image)
-                                    <img src="{{ asset('storage/'.$p->image) }}" class="rounded w-14 h-14 object-cover shadow border" alt="{{ $p->name }}">
-                                @else
-                                    <span class="text-gray-400 italic">-</span>
                                 @endif
                             </td>
                             <td class="px-4 py-2 font-mono">{{ $p->barcode }}</td>
@@ -83,7 +79,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="9" class="px-4 py-3 text-center text-gray-500 italic">
+                            <td colspan="8" class="px-4 py-3 text-center text-gray-500 italic">
                                 Belum ada data produk.
                             </td>
                         </tr>
