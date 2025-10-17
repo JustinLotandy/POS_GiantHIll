@@ -14,7 +14,7 @@
 
         <!-- Tombol Cetak PDF -->
         <a href="{{ route('products.pdf') }}"
-           class="px-4 py-2 rounded-lg bg-gray-800 text-white hover:bg-black"> Cetak PDF
+           class="px-4 py-2 rounded-lg bg-gray-800 text-white hover:bg-black mb-4">Cetak PDF
         </a>
 
         <div class="overflow-x-auto bg-white rounded shadow">
