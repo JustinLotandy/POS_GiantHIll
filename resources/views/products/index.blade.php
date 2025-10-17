@@ -6,10 +6,18 @@
     </x-slot>
 
     <div class="max-w-7xl mx-auto py-8 px-4">
+        <!-- Tombol Tambah Produk -->
         <a href="{{ route('products.create') }}"
            class="inline-block bg-blue-600 text-white px-4 py-2 rounded shadow hover:bg-blue-700 mb-4 transition">
            + Tambah Produk
         </a>
+
+        <!-- ✅ Tambahan: Tombol Cetak PDF -->
+        <a href="{{ route('products.pdf') }}"
+           class="inline-block bg-red-600 text-white px-4 py-2 rounded shadow hover:bg-red-700 mb-4 transition ml-2">
+           🖨️ Cetak PDF
+        </a>
+
         <div class="overflow-x-auto bg-white rounded shadow">
             <table class="min-w-full divide-y divide-gray-200 text-sm">
                 <thead class="bg-gray-50">

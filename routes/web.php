@@ -29,6 +29,9 @@ Route::middleware('auth')->group(function () {
 
     // === Produk ===
     Route::resource('products', ProductController::class)->middleware('permission:products.lihat');
+    Route::get('/products/pdf', [ProductController::class, 'exportPDF'])
+     ->name('products.pdf')
+     ->middleware('permission:products.lihat');
 
     // === Kategori ===
     Route::resource('categories', CategoryController::class)->middleware('permission:categories.lihat');
