@@ -1,99 +1,69 @@
-<x-app-layout>
-    <x-slot name="header">
-        <h2 class="font-semibold text-xl text-gray-800 leading-tight">
-            Daftar Produk
-        </h2>
-    </x-slot>
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <title>Daftar Produk</title>
+    <style>
+        body { font-family: DejaVu Sans, sans-serif; font-size: 12px; }
+        h2 { text-align: center; margin-bottom: 20px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        th, td { border: 1px solid #333; padding: 6px; text-align: left; vertical-align: middle; }
+        th { background-color: #f0f0f0; }
+        .text-right { text-align: right; }
 
-    <div class="max-w-7xl mx-auto py-8 px-4">
-        <!-- Tombol Tambah Produk -->
-        <a href="{{ route('products.create') }}"
-           class="inline-block bg-blue-600 text-white px-4 py-2 rounded shadow hover:bg-blue-700 mb-4 transition">
-           + Tambah Produk
-        </a>
+        /* Label warna stok */
+        .label {
+            display: inline-block;
+            padding: 2px 6px;
+            font-size: 10px;
+            border-radius: 4px;
+            font-weight: bold;
+            color: #fff;
+        }
+        .red-dark { background-color: #b91c1c; }  /* stok == 0 */
+        .red { background-color: #ef4444; }       /* stok < 10 */
+        .yellow { background-color: #facc15; color: #000; } /* stok < 15 */
+    </style>
+</head>
+<body>
+    <h2>Daftar Produk Minimarket Giant Hill</h2>
 
-        <!-- Tombol Cetak PDF -->
-        <a href="{{ route('products.pdf') }}"
-           class="inline-block bg-red-600 text-white px-4 py-2 rounded shadow hover:bg-red-700 mb-4 transition ml-2">
-           🖨️ Cetak PDF
-        </a>
+    <table>
+        <thead>
+            <tr>
+                <th>ID Produk</th>
+                <th>Nama</th>
+                <th>Kategori</th>
+                <th>Harga Sebelum</th>
+                <th>Harga Sesudah</th>
+                <th>Stok</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach($products as $p)
+                <tr>
+                    <td>{{ $p->id_Produk }}</td>
+                    <td>{{ $p->name }}</td>
+                    <td>{{ $p->category->nama_kategori ?? '-' }}</td>
+                    <td class="text-right">Rp {{ number_format($p->harga_sebelum,0,',','.') }}</td>
+                    <td class="text-right">Rp {{ number_format($p->harga_sesudah,0,',','.') }}</td>
+                    <td>
+                        {{ $p->stock }}
+                        @if($p->stock == 0)
+                            <span class="label red-dark">Habis</span>
+                        @elseif($p->stock < 10)
+                            <span class="label red">Sangat Rendah</span>
+                        @elseif($p->stock < 15)
+                            <span class="label yellow">Low Stock</span>
+                        @endif
+                    </td>
+                </tr>
+            @endforeach
+        </tbody>
+    </table>
 
-        <div class="overflow-x-auto bg-white rounded shadow">
-            <table class="min-w-full divide-y divide-gray-200 text-sm">
-                <thead class="bg-gray-50">
-                    <tr>
-                        <th class="px-4 py-3 font-bold text-gray-700 text-left">ID Produk</th>
-                        <th class="px-4 py-3 font-bold text-gray-700 text-left">Nama</th>
-                        <th class="px-4 py-3 font-bold text-gray-700 text-left">Kategori</th>
-                        <th class="px-4 py-3 font-bold text-gray-700 text-left">Harga Sebelum</th>
-                        <th class="px-4 py-3 font-bold text-gray-700 text-left">Harga Sesudah</th>
-                        <th class="px-4 py-3 font-bold text-gray-700 text-left">Stok</th>
-                        <th class="px-4 py-3 font-bold text-gray-700 text-left">Gambar</th>
-                        <th class="px-4 py-3 font-bold text-gray-700 text-left">Barcode</th>
-                        <th class="px-4 py-3 font-bold text-gray-700 text-left">Aksi</th>
-                    </tr>
-                </thead>
-                <tbody class="bg-white divide-y divide-gray-100">
-                    @forelse ($products as $p)
-                        <tr class="hover:bg-gray-50 transition">
-                            <td class="px-4 py-2 text-gray-700 font-mono">{{ $p->id_Produk }}</td>
-                            <td class="px-4 py-2">{{ $p->name }}</td>
-                            <td class="px-4 py-2">{{ $p->category->nama_kategori ?? '-' }}</td>
-                            <td class="px-4 py-2 text-blue-800 font-semibold">
-                                Rp {{ number_format($p->harga_sebelum,0,',','.') }}
-                            </td>
-                            <td class="px-4 py-2 text-green-700 font-semibold">
-                                Rp {{ number_format($p->harga_sesudah,0,',','.') }}
-                            </td>
-                            <td class="px-4 py-2">
-                                {{ $p->stock }}
-
-                                {{-- Label stok dinamis --}}
-                                @if($p->stock == 0)
-                                    <span class="ml-2 px-2 py-0.5 text-xs font-semibold bg-red-700 text-white rounded-full">
-                                        Habis
-                                    </span>
-                                @elseif($p->stock < 10)
-                                    <span class="ml-2 px-2 py-0.5 text-xs font-semibold bg-red-500 text-white rounded-full">
-                                        Sangat Rendah
-                                    </span>
-                                @elseif($p->stock < 15)
-                                    <span class="ml-2 px-2 py-0.5 text-xs font-semibold bg-yellow-400 text-black rounded-full">
-                                        Low Stock
-                                    </span>
-                                @endif
-                            </td>
-                            <td class="px-4 py-2">
-                                @if($p->image)
-                                    <img src="{{ asset('storage/'.$p->image) }}" class="rounded w-14 h-14 object-cover shadow border" alt="{{ $p->name }}">
-                                @else
-                                    <span class="text-gray-400 italic">-</span>
-                                @endif
-                            </td>
-                            <td class="px-4 py-2 font-mono">{{ $p->barcode }}</td>
-                            <td class="px-4 py-2 flex gap-1">
-                                <a href="{{ route('products.edit', $p->id_Produk) }}"
-                                   class="inline-block px-3 py-1 bg-yellow-400 hover:bg-yellow-500 text-xs rounded font-semibold text-white shadow">
-                                   Edit
-                                </a>
-                                <form action="{{ route('products.destroy', $p->id_Produk) }}" method="POST" class="inline"
-                                    onsubmit="return confirm('Yakin hapus?')">
-                                    @csrf @method('DELETE')
-                                    <button class="px-3 py-1 bg-red-500 hover:bg-red-600 text-xs rounded font-semibold text-white shadow" type="submit">
-                                        Hapus
-                                    </button>
-                                </form>
-                            </td>
-                        </tr>
-                    @empty
-                        <tr>
-                            <td colspan="9" class="px-4 py-3 text-center text-gray-500 italic">
-                                Belum ada data produk.
-                            </td>
-                        </tr>
-                    @endforelse
-                </tbody>
-            </table>
-        </div>
-    </div>  
-</x-app-layout>
+    <p style="margin-top: 20px; text-align:right; font-size:11px;">
+        Dicetak pada: {{ now()->translatedFormat('d F Y, H:i') }}
+    </p>
+</body>
+</html>
